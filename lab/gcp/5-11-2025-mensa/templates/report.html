@@ -1,0 +1,21 @@
+<html>
+    <body>
+        <div style="font-size: 30pt">Ordini dell'ultima settimana</div>
+        <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Data</th>
+                <th scope="col">Pasti preparati</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d, p in zip(date_list, pasti_list) %}
+                <tr>
+                    <td style="text-align: center"><a href="/mensa/{{d}}">{{d}}</a></td>
+                    <td style="text-align: center">{{p}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </body>
+</html>

@@ -213,16 +213,15 @@ Utilizziamo questo file per definire i metodi HTTP a cui l'API può rispondere e
 ```python
 from flask import Flask, request
 from flask_restful import Resource, Api
-```
-Optional: 
-```python
 from flask_cors import CORS
+from file_firestore import *
 ```
 Creiamo l'app con Flask
 ```python
 app = Flask(__name__)
 CORS(app)
 api=Api(app)
+db_dao = Classe_firestore()
 
 # Indicato all'interno di dettagli_api.yaml
 basePath = '/api/v1'
@@ -285,6 +284,7 @@ handlers:
 ```bash
 gcloud app deploy api.yaml
 ```
+Per eseguire il test delle API si utilizzi swagger ([link](editor.swagger.io))
 
 
 

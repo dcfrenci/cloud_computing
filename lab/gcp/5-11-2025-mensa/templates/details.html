@@ -1,0 +1,23 @@
+<html>
+    <body>
+        <div style="font-size: 30pt">Ordini per il giorno {{date}}</div>
+        <p>Ordini totali: {{ordini}}</p>
+
+        <table class="table text-center">
+            <thead>
+                <tr>
+                    <th scope="col">Asili</th>
+                    <th scope="col">Pasti ordinati</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d, p in zip(asili_list, pasti_list) %}
+                    <tr>
+                        <td style="text-align: center">{{d}}</td>
+                        <td style="text-align: center">{{p}}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>
