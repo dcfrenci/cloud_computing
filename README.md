@@ -76,7 +76,7 @@ Per visualizzare il billing account utilizziamo il seguente comando selezionando
 gcloud billing accounts list
 ```
 ```bash
-gcloud billing project link ${PROJECT_ID} --billing-account YOUR_BILLING_ACCOUNT
+gcloud billing projects link ${PROJECT_ID} --billing-account YOUR_BILLING_ACCOUNT
 ```
 Per verificare se il collegamento è stato eseguito con successo, eseguendo il seguente comando dovremmo avere per la voce `billingEnable == True`.
 ```bash
@@ -84,9 +84,15 @@ gcloud billing projects describe ${PROJECT_ID}
 ```
 Attiviamo tutti i services di cui avremo bisogno in seguito
 ```bash
-gcloud services enable appengine.googleapis.com cloudbuild.googleapis.com storage.googleapis.com
+gcloud services enable appengine.googleapis.com cloudbuild.googleapis.com storage.googleapis.com firestore.googleapis.com
 ```
 
+## Create the app on gcloud
+Creiamo l'applicazione su gcloud
+```bash
+gcloud app create --project=${PROJECT_ID}
+gcloud app describe --project=${PROJECT_ID}
+```
 
 
 
@@ -277,11 +283,7 @@ handlers:
 
 ## Deploy
 ```bash
-gcloud app create --project=${PROJECT_ID}
-```
-
-```bash
-gcloud app describe --project=${PROJECT_ID}
+gcloud app deploy api.yaml
 ```
 
 
@@ -422,12 +424,10 @@ handlers:
 ## Deploy
 Ripetiamo lo stesso deployment che abbiamo utilizzato per l'API:
 ```bash
-gcloud app create --project=${PROJECT_ID}
+gcloud app deploy app.yaml
 ```
 
-```bash
-gcloud app describe --project=${PROJECT_ID}
-```
+
 
 
 
