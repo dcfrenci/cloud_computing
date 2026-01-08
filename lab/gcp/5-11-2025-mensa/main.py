@@ -16,15 +16,22 @@ def get_last_week():
     documents = db_dao.get_elements()
     date_list = []
     pasti_list = []
+    today = datetime.datetime.today().strftime("%d-%m-%Y")
+    today_pasti = 0
     for d in last_week():
         date_pasti = []
         for doc in documents:
             if doc.endswith(d):
-                date_list.append(d)
+                if d != today:
+                    date_list.append(d)
                 date_pasti.append(db_dao.get_element_by_name(doc)["pasti"])
         if len(date_pasti) > 0:
-            pasti_list.append(sum(date_pasti))
-    return render_template("report.html", date_list=set(date_list), pasti_list=pasti_list, zip=zip)
+            if d != today:
+                pasti_list.append(sum(date_pasti))
+            else:
+                today_pasti = sum(date_pasti)
+                
+    return render_template("report.html", date_list=set(date_list), pasti_list=pasti_list, zip=zip, today=today, today_pasti=today_pasti)
 
 @app.route('/mensa/<data>', methods=['GET'])
 def nome_della_funzione(data):
