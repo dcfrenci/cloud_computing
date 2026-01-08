@@ -50,7 +50,6 @@ __pycache__/
 credentials.json
 ```
 
-
 ## Create the gcloud project
 Definiamo il `PROJECT_ID` come variabile globale e in modo che sia univoco a livello globale
 ```bash
@@ -226,10 +225,12 @@ db_dao = Classe_firestore()
 # Indicato all'interno di dettagli_api.yaml
 basePath = '/api/v1'
 ```
-Dalla lettura del file **dettagli_api.yaml** deduciamo i path e le relative risorse. Creiamo quindi una classe per ogni risorsa che abbiamo identificato:
+Dalla lettura del file **dettagli_api.yaml** deduciamo i path e le relative risorse. Creiamo quindi *una classe per ogni path* che abbiamo identificato inserendo i *metodi* e ritornando `None, Codice` quando non è specificato lo `schema` altrimenti ritornando un dizionario con la struttura specificata all'interno della definizione.
 ```python
-class Risorsa_uno(Resource):
+class Resource_UNO(Resource):
     def get(self, NOME_PARAMETRO):
+        # Per ottenere i dati all'interno della request -> Otteniamo un dizionario
+        REQUEST_DATA=request.json
         return obj, codice(200, 400)
     
     def post(self, NOME_PARAMETRO):
@@ -243,15 +244,15 @@ class Risorsa_uno(Resource):
 ```
 Per ciascuna classe eseguiamo il collegamento con il path corretto all'esterno della classe indicando il nome del parametro (se presente nel path).
 ```python
-api.add_resource(ColorResource, f'{basePath}/path/<string:NOME_PARAMETRO>')
+api.add_resource(Resource_UNO, f'{basePath}/path/<string:NOME_PARAMETRO>')
 ```
 Ecco un esempio in cui il path possiede solamente un metodo e non è presente alcun parametro:
 ```python
-class Risorsa_due(Resource):
+class Resource_DUE(Resource):
     def get(self):
         return obj_list, 200
 
-api.add_resource(ColorList, f'{basePath}/path')
+api.add_resource(Resource_DUE, f'{basePath}/path')
 ```
 
 ### api.yaml
@@ -284,9 +285,13 @@ handlers:
 ```bash
 gcloud app deploy api.yaml
 ```
-Per eseguire il test delle API si utilizzi swagger ([link](editor.swagger.io))
 
-
+## Testing
+Per fare il testing inseriamo all'interno di **api.py** il codice seguente e possiamo fare il test usando swagger ([link](editor.swagger.io)).
+```python
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=8080, debug=True)
+```
 
 
 
@@ -367,7 +372,7 @@ class Classeform(Form):
 Creiamo la Web application
 ```python
 app = Flask(__name__)
-object_dao = Classe_firestore()
+db_dao = Classe_firestore()
 ```
 Definiamo quindi le funzioni che gestiscono i metodi dell'applicazione (**GET, POST, PUT, DELETE**). Ogni funzione dichiara che tipo di metodi può gestire attraverso `methods=[LISTA_METODI]. La funzione dovrà poi eseguire un return sul render del template HTML inserendo come parametri quelli richiesti da quello specifico template. 
 
@@ -427,7 +432,12 @@ Ripetiamo lo stesso deployment che abbiamo utilizzato per l'API:
 gcloud app deploy app.yaml
 ```
 
-
+## Testing
+Per eseguire il test della web application inseriamo in **main.py**:
+```python
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=8080, debug=True)
+```
 
 
 
