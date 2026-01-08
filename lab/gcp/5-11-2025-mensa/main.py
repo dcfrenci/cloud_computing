@@ -9,7 +9,7 @@ db_dao = Classe_firestore()
 
 def last_week():
     today = datetime.datetime.today()
-    return [x.strftime("%d")+ "-" + x.strftime("%m") + "-" + x.strftime("%Y") for x in [today - timedelta(days=d) for d in range(6, -1, -1)]]
+    return [x.strftime("%d-%m-%Y") for x in [today - timedelta(days=d) for d in range(6, -1, -1)]]
 
 @app.route('/mensa', methods=['GET']) 
 def get_last_week():

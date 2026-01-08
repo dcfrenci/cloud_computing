@@ -3,10 +3,28 @@ Questa guida consiste in una schematizzazione dei passaggi e delle procedure ric
 
 ## Structure
 La guida è composta da quattro macro sezioni con introdotte da una sezione dedicata alla creazione del progetto. Risulta così organizzata:
-* [Firestore](firestore)
-* [RESTful API](restful-api)
-* [Web application](web-application)
-* [Pub/Sub](pub/sub)
+* [Project](#project)
+    * [Link the billing account](#link-the-billing-account)
+    * [Create the app on gcloud](#create-the-app-on-gcloud)
+* [Firestore](#firestore)
+    * [Structure](#structure-1)
+        * [db.json](#dbjson)
+        * [file_firestore.py](#file_firestorepy)
+    * [Deploy](#deploy-1)
+* [RESTful API](#restful-api)
+    * [Structure](#structure-2)
+        * [api.py](#apipy)
+        * [api.yaml](#apiyaml)
+    * [Deploy](#deploy-2)
+* [Web application](#web-application)
+    * [Structure](#structure-3)
+        * [templates/](#templates)
+        * [main.py](#mainpy)
+        * [app.yaml](#appyaml)
+    * [Deploy](#deploy-3)
+* [Pub/Sub](#pub/sub)
+    * [Structure](#structure-4)
+    * [Deploy](#deploy-4)
 
 ## Project
 Il primo passo è creare un **ambiente virtuale** e **selezionarlo** all'interno dell'ide. All'interno del terminale di Code eseguiamo i seguenti comandi
@@ -17,9 +35,13 @@ Attiviamo l'ambiente virtuale che abbiamo appena creato (venv)
 ```bash
 source .venv/bin/activate
 ```
+Andiamo a creare i seguenti file
+* requirements.txt  --> Per definire le librerie necessarie
+* .gcloudignore     --> Per specificare i file da **non** caricare su gcloud
+* .gitingnore       --> Per specificare i file da **non** caricare su github
 
 ### requirements.txt
-Creiamo il file **requirements.txt**
+Creiamo il file **requirements.txt**.
 ```
 Flask==3.1.2
 Flask-RESTful==0.3.10
@@ -48,6 +70,14 @@ __pycache__/
 # Ignored by the build system
 /setup.cfg
 credentials.json
+```
+
+### .gitignore
+Creiamo il file **.gitignore**.
+```
+credentials.json
+.venv/
+__pycache__/
 ```
 
 ## Create the gcloud project
@@ -92,16 +122,17 @@ Creiamo l'applicazione su gcloud
 gcloud app create --project=${PROJECT_ID}
 gcloud app describe --project=${PROJECT_ID}
 ```
-
-
-
-
-
-
-
-
-
-
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
 # Firestore
 Il database che utilizzeremo all'interno della nostra applicazione è Firestore. Per prima cosa **creiamo il database** all'interno della google platform, scegliendo se vogliamo un nome specifico
 ```html
@@ -188,17 +219,17 @@ All'interno del terminale che utilizzeremo per eseguire i test e lanciare la nos
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
 ```
-
-
-
-
-
-
-
-
-
-
-
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
 # RESTful API
 Dalla lettura del file **dettagli_api.yaml** fornito, estraiamo i *metodi* da implementare, i *codici* ad esse associati, le *definizioni* delle resource ed i vari *path*.
 
@@ -292,11 +323,17 @@ Per fare il testing inseriamo all'interno di **api.py** il codice seguente e pos
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
 ```
-
-
-
-
-
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
 # Web application
 L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'interno del database.
 
@@ -310,7 +347,7 @@ Per poter eseguire il deployment di questa web app dobbiamo crerare i seguenti f
 ### templates/
 Creiamo la cartella **templates** al cui interno inseriremo i file HTML che andranno a costituire i template della pagine dell'applicazione web. Per poter inserire delle strutture dinamiche si fa utilizzo di parametri che vengono passati come argomento quando si renderizzano i template. Seguono alcune strutture utili.
 
-Grazie al parametro `LIST_PARAM` possiamo creare delle strutture dinamiche. In questo caso la struttura risulta cliccabile grazie `<a>...</a>` e ci reindirizza al link `/PATH/{{c}}` dove *c* è un elemento della lista.
+Grazie al parametro `LIST_PARAM` possiamo creare delle strutture dinamiche. In questo caso la struttura risulta cliccabile grazie `<a>...</a>` e ci reindirizza al link `/PATH/{{c}}` dove *c* è un elemento della lista. Se vogliamo utilizzare delle funzioni come `zip()` queste devono essere passate come argomento al template.
 ```html
 <html>
     <body>
@@ -330,7 +367,7 @@ Questa struttura crea una box utilizzando i parametri `r`, `g`, `b` per determin
     </body>
 </html>
 ```
-Crea un WTForm con le label e i valori associati che sono specificati nella sua definizione (vedi dopo).
+Questa struttura crea un WTForm con le label e i valori associati che sono specificati nella sua definizione (vedi dopo).
 ```html
 <html>
     <body>
@@ -338,13 +375,36 @@ Crea un WTForm con le label e i valori associati che sono specificati nella sua 
             Create new color:
             <div>{{form.name.label}}: {{form.name}}</div>
             <div>{{form.red.label}}: {{form.red}}</div>
-            <div>{{form.green.label}}: {{form.green}}</div>
-            <div>{{form.blue.label}}: {{form.blue}}</div>
             <button>{{form.submit}}</button>
         </form>
     </body>
 </html>
 ```
+Questa struttura crea una tabella dove di definiscono prima le colonne all'interno `<thead>` e poi le righe in `<tbody>`. Si utilizza:
+* `<tr>` --> Definisce una riga
+* `<th>` --> Definisce una cella con testo in **grassetto** e centrato automaticamente
+* `<td>` --> Definisce una cella con testo semplice
+```html
+<html>
+    <body>
+        <table class="table text-center">
+            <thead>
+                <tr>
+                    <th scope="col">Colonna 1</th>
+                    <th scope="col">Colonna 2</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th scope="row">Cella 1 per riga 1</th>
+                    <td style="text-align: center">Cella 2 per riga 2</td>
+                </tr>
+            </tbody>
+        </table>
+    </body>
+</html>
+```
+
 Per altre strutture consultare la documentazione di **bootstrap** [link](https://www.google.com/search?q=bootstrap).
 
 ### main.py
@@ -438,16 +498,18 @@ Per eseguire il test della web application inseriamo in **main.py**:
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
 ```
-
-
-
-
-
-
-
-
-
-
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
 # PubSub 
 ## Structure
+
 ## Deploy
