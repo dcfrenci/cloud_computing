@@ -1,32 +1,40 @@
 # Guide gcp
 Questa guida consiste in una schematizzazione dei passaggi e delle procedure richieste per il corretto svolgimento della prove di laboratorio per il corso "Applicazioni e sistemi cloud".
 
-## Structure
+## Index
 La guida è composta da quattro macro sezioni con introdotte da una sezione dedicata alla creazione del progetto. Risulta così organizzata:
 * [Project](#project)
-    * [Link the billing account](#link-the-billing-account)
-    * [Create the app on gcloud](#create-the-app-on-gcloud)
-* [Firestore](#firestore)
-    * [Structure](#structure-1)
+    * [Structure](#11---structure)
+        * [requirements.txt](#requirementstxt)
+        * [.gcloudignore](#gcloudignore)
+        * [.gitignore](#gitignore)
+    * [Create the gcloud project](#12---create-the-gcloud-project)
+    * [Link the billing account](#13---link-the-billing-account)
+    * [Create the app on gcloud](#14---create-the-app-on-gcloud)
+* [Firestore](#2---firestore)
+    * [Structure](#21---structure)
         * [db.json](#dbjson)
         * [file_firestore.py](#file_firestorepy)
-    * [Deploy](#deploy-1)
-* [RESTful API](#restful-api)
-    * [Structure](#structure-2)
+    * [Deploy](#22---deploy)
+* [RESTful API](#3---restful-apiestful-api)
+    * [Structure](#31---structure)
         * [api.py](#apipy)
         * [api.yaml](#apiyaml)
-    * [Deploy](#deploy-2)
-* [Web application](#web-application)
-    * [Structure](#structure-3)
+    * [Deploy](#32---deploy)
+* [Web application](#4---web-application)
+    * [Structure](#41---structure)
         * [templates/](#templates)
         * [main.py](#mainpy)
         * [app.yaml](#appyaml)
-    * [Deploy](#deploy-3)
-* [Pub/Sub](#pub/sub)
-    * [Structure](#structure-4)
-    * [Deploy](#deploy-4)
+    * [Deploy](#42---deploy)
+* [Pub/Sub](#5---pub/sub)
+    * [Structure](#51---structure)
+    * [Deploy](#52---deploy)
+* [Function](#6---function)
+    * [Structure](#61---structure)
+    * [Deploy](#62---deploy)
 
-## Project
+# 1 - Project
 Il primo passo è creare un **ambiente virtuale** e **selezionarlo** all'interno dell'ide. All'interno del terminale di Code eseguiamo i seguenti comandi
 ```bash
 python3 -m venv .venv
@@ -35,7 +43,9 @@ Attiviamo l'ambiente virtuale che abbiamo appena creato (venv)
 ```bash
 source .venv/bin/activate
 ```
-Andiamo a creare i seguenti file
+
+## 1.1 - Structure
+Si creino i seguenti file:
 * requirements.txt  --> Per definire le librerie necessarie
 * .gcloudignore     --> Per specificare i file da **non** caricare su gcloud
 * .gitingnore       --> Per specificare i file da **non** caricare su github
@@ -80,7 +90,7 @@ credentials.json
 __pycache__/
 ```
 
-## Create the gcloud project
+## 1.2 - Create the gcloud project
 Definiamo il `PROJECT_ID` come variabile globale e in modo che sia univoco a livello globale
 ```bash
 export PROJECT_ID=MY_PROJECT
@@ -91,7 +101,7 @@ Creiamo il progetto e lo settiamo come default
 gcloud projects create ${PROJECT_ID} --set-as-default
 ```
 
-## Link the billing account
+## 1.3 - Link the billing account
 Definiamo il `NAME` come variabile globale
 ```bash
 export NAME=USER_NAME
@@ -116,7 +126,7 @@ Attiviamo tutti i services di cui avremo bisogno in seguito
 gcloud services enable appengine.googleapis.com cloudbuild.googleapis.com storage.googleapis.com firestore.googleapis.com
 ```
 
-## Create the app on gcloud
+## 1.4 - Create the app on gcloud
 Creiamo l'applicazione su gcloud
 ```bash
 gcloud app create --project=${PROJECT_ID}
@@ -133,12 +143,12 @@ gcloud app describe --project=${PROJECT_ID}
 ###
 ###
 ###
-# Firestore
+# 2 - Firestore
 Il database che utilizzeremo all'interno della nostra applicazione è Firestore. Per prima cosa **creiamo il database** all'interno della google platform, scegliendo se vogliamo un nome specifico
 ```html
 https://console.cloud.google.com/firestore/databases?hl=it&project=PROJECT_ID
 ```
-## Structure
+## 2.1 - Structure
 Prima di fare il deployment del database è necessario creare alcuni file necessari per il suo corretto funzionamento.
 * db.json --> Usato per inizializzare il database con dei dati
 * file_firestore.py --> Usato per gestire la creazione/modifica/eliminazione dei dati
@@ -196,7 +206,7 @@ class Classe_firestore(object):
                 self.add_element(data)
 ```
 
-## Deploy
+## 2.2 - Deploy
 Abilitiamo il servizio su gcloud 
 ```bash
 gcloud services enable firestore.googleapis.com
@@ -230,10 +240,10 @@ export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
 ###
 ###
 ###
-# RESTful API
+# 3 - RESTful API
 Dalla lettura del file **dettagli_api.yaml** fornito, estraiamo i *metodi* da implementare, i *codici* ad esse associati, le *definizioni* delle resource ed i vari *path*.
 
-## Structure
+## 3.1 - Structure
 Per eseguire il deployment di API RESTful dobbiamo definire i seguenti file:
 * api.py    --> Usato per gestire metodi HTTP/Codici/Paths
 * api.yaml  --> Usato per definire il deployment dell'app su gcloud
@@ -312,12 +322,12 @@ handlers:
   script: auto
 ```
 
-## Deploy
+## 3.2 - Deploy
 ```bash
 gcloud app deploy api.yaml
 ```
 
-## Testing
+## 3.3 - Testing
 Per fare il testing inseriamo all'interno di **api.py** il codice seguente e possiamo fare il test usando swagger ([link](editor.swagger.io)).
 ```python
 if __name__ == '__main__':
@@ -334,10 +344,10 @@ if __name__ == '__main__':
 ###
 ###
 ###
-# Web application
+# 4 - Web application
 L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'interno del database.
 
-## Structure
+## 4.1 - Structure
 Per poter eseguire il deployment di questa web app dobbiamo crerare i seguenti file:
 * templates/    --> Cartella in cui raggruppiamo tutti i template HTML
 * static/       --> Cartella in cui raggruppiamo tutti i file statici
@@ -453,7 +463,7 @@ def nome_della_funzione():
 def nome_della_funzione(PARAM):
     if request.method == 'POST':
         cform = Classeform(request.form)
-        object_dao.add_color(cform.name.data, cform.red.data)
+        object_dao.add_element(cform.name.data, cform.red.data)
         
         return redirect("/path/" + cform.name.data, code=302)
     
@@ -493,13 +503,13 @@ handlers:
   script: auto
 ```
 
-## Deploy
+## 4.2 - Deploy
 Ripetiamo lo stesso deployment che abbiamo utilizzato per l'API:
 ```bash
 gcloud app deploy app.yaml
 ```
 
-## Testing
+## 4.3 - Testing
 Per eseguire il test della web application inseriamo in **main.py**:
 ```python
 if __name__ == '__main__':
@@ -516,7 +526,133 @@ if __name__ == '__main__':
 ###
 ###
 ###
-# PubSub 
-## Structure
+# 5 - PubSub 
+## 5.1 - Structure
+## 5.2 - Deploy
+## 5.3 - Testing
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
+# 6 - Function
+Le function sono delle **Action** che vengono eseguite in risposta al verificarsi di un determinato **Event**. Affinché un evento determini esecuzione di una funzione, questo deve essere stato colletato tramite un **Trigger**. Il nostro obiettivo sarà quello di creare la funzione (action) e collegarla tramite un trigger all'osservazione di uno specifico evento. 
 
-## Deploy
+## 6.1 - Structure
+Si devono quindi creare questi file:
+* func_stat/            --> Cartella che conterrà tutti i file legati alla function
+    * requirements.txt  --> Definisce le librerie necessarie
+    * .gcloudignore     --> Definisce i file da non caricare su gcloud
+    * main.py           --> Usato per gestire tutte le funzionalità
+    * (app.yaml)        --> Usato per deployment della web app
+
+### main.py
+Aggiungiamo gli import al file **main.py**. 
+```python
+from google.cloud import firestore
+```
+Per la definizione della Function dobbiamo comprendere la sua tipologia:
+* **HTTP Function**: questo tipo di function accetta solamente un oggetto request e restituisce un string/HTML. Tutte le informazioni sulla richiesta sono contenute all'interno dell'oggetto request (Request è un oggetto di Flask --> Dovremo includerlo). 
+* **Event-driven Function (Gen 1)**: questo tipo di function accetta due parametri data e context e sono utilizzate solitamente da eventi come Pub/Sub o Firestore.
+* Cloud Functions (Gen 2) --> **Non fatte**: questo di function unisce i parametri data e context delle Event-driven function basando il processo su un Function network e sulle Cloud run. 
+
+Nel caso di **HTTP Function** inseriamo:
+```python
+from flask import Flask, request
+
+db = firestore.Client(database="NOME_DATABASE")
+
+def HTTP_FUNCTION(request):
+
+    return 'STRING'
+```
+Nel caso di **Event-driven Function** sappiamo che data è un dizionario a cui possiamo accedere usando le chiavi `oldValue`, `updateMask` e `value`, con la seguente struttura:
+```python
+{
+	"oldValue": { // Update and Delete operations only
+		Document object with pre-operation document snapshot
+	},
+	"updateMask": { // Update operations only
+		DocumentMask object that lists changed fields.
+	},
+	"value": {
+		Document object with post-operation document snapshot
+	}
+}
+```
+```python
+db = firestore.Client(database="NOME_DATABASE")
+
+def EVENT_FUNCTION(data, context):
+    document = data["value"]
+    value = context.params["KEY"]
+    document_name = context.resource.split('/')[-1]
+
+```
+Il metodo `.params["KEY"]` viene usato per accedere al dizionario creato dall'uso delle wildcard (.../temp/{day} --> Usiamo 'day' come KEY), mentre grazie `.resource.split('/')[-1]` possiamo ottenere dal path completo il nome del documento.
+
+Talvolta viene richiesto di creare una **web function** per uno specifico path e questo può essere fatto come viene spiegato nel [capitolo 4](#4---web-application). Si inserisce quindi:
+```python
+from flask import Flask, render_template, request, redirect
+
+app = Flask(__name__)
+
+@app.route('/path/<PARAM>', methods=['GET', 'POST', 'PUT'])
+def nome_della_funzione(PARAM):
+    if request.method == 'POST':
+        cform = Classeform(request.form)
+        object_dao.add_element(cform.name.data, cform.red.data)
+        
+        return redirect("/path/" + cform.name.data, code=302)
+    
+    element = object_dao.get_element_by_name(PARAM)
+
+    if request.method == 'GET':
+        cform=Classeform(obj=Struct(**element))
+        cform.name.data = PARAM
+    return render_template("TEMPLATE_HTML", PARAMETRI...)
+```
+
+## 6.2 - Deploy
+
+Struttura per --trigger-resource=
+projects/[PROJECT_ID]/databases/[DATABASE_ID]/documents/[PATH_AL_DOCUMENTO]
+il PATH_AL_DOCUMENTO potrebbe essere sostituito con il path completo (.../NOME_COLLECTION/NOME_DOCUMENTO) oppure dal nome della collection e una wildcard che ci permette di osservare tutti i cambiamenti su tutta la collection (.../NOME_COLLECTION/{NOME_DOCUMENTO}). Nell'ultimo caso non è importante la stringa che sostituisce NOME_DOCUMENTO perché svolge il ruolo di segnaposto. Utilizzando in questo modo le wildcard osserviamo solamente i cambiamenti per quel livello. Se invece vogliamo che la funzione sia triggerata anche dai cambiamenti più a valle di quel punto allora inserisco all'interno della wildcard ==** che indica un livello di osservabilità dei cambiamenti iterativo che va in profondità (.../{WILD_CARD==\*\*}). L'osservabilità viene fatta solo sui documenti se non vogliamo usare (==**)  
+
+Da eseguire nel terminale quando sono nella cartella creata
+```bash
+touch credentials.json 
+gcloud iam service-accounts keys create credentials.json --iam-account ${NAME}@${PROJECT_ID}.iam.gserviceaccount.com 
+export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
+```
+
+```bash
+gcloud services enable cloudfunctions.googleapis.com
+```
+
+```bash
+export FUNCTION_NAME=NAME
+export RUNTIME=python310
+echo Description: && echo - FUNCTION_NAME: ${FUNCTION_NAME} && echo - RUNTIME: ${RUNTIME}
+```
+
+```bash
+gcloud functions deploy ${FUNCTION_NAME} --runtime ${RUNTIME} --trigger-http --allow-unauthenticated --docker-registry=artifact-registry --no-gen2
+```
+
+```bash
+gcloud app deploy app.yaml
+```
+
+## 6.3 - Testing
+Per eseguire il testing 
+```python
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=8080, debug=True)
+```
