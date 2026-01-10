@@ -3,7 +3,7 @@ Questa guida consiste in una schematizzazione dei passaggi e delle procedure ric
 
 ## Index
 La guida è composta da quattro macro sezioni con introdotte da una sezione dedicata alla creazione del progetto. Risulta così organizzata:
-* [Project](#project)
+* [Project](#1---project)
     * [Structure](#11---structure)
         * [requirements.txt](#requirementstxt)
         * [.gcloudignore](#gcloudignore)
@@ -16,7 +16,7 @@ La guida è composta da quattro macro sezioni con introdotte da una sezione dedi
         * [db.json](#dbjson)
         * [file_firestore.py](#file_firestorepy)
     * [Deploy](#22---deploy)
-* [RESTful API](#3---restful-apiestful-api)
+* [RESTful API](#3---restful-api)
     * [Structure](#31---structure)
         * [api.py](#apipy)
         * [api.yaml](#apiyaml)
@@ -550,7 +550,28 @@ Si devono quindi creare questi file:
     * requirements.txt  --> Definisce le librerie necessarie
     * .gcloudignore     --> Definisce i file da non caricare su gcloud
     * main.py           --> Usato per gestire tutte le funzionalità
-    * (app.yaml)        --> Usato per deployment della web app
+
+### requirements.txt
+Creiamo il file **requirements.txt**:
+```
+google-cloud-firestore==2.22.0
+
+# Se contiene una HTTP function 
+flask==2.3.3
+```
+
+### .gcloudignore
+Creiamo il file **.gcloudignore**:
+```
+.git
+.gitignore
+
+__pycache__/
+.venv/
+
+/setup.cfg
+credentials.json
+```
 
 ### main.py
 Aggiungiamo gli import al file **main.py**. 
@@ -562,13 +583,15 @@ Per la definizione della Function dobbiamo comprendere la sua tipologia:
 * **Event-driven Function (Gen 1)**: questo tipo di function accetta due parametri data e context e sono utilizzate solitamente da eventi come Pub/Sub o Firestore.
 * Cloud Functions (Gen 2) --> **Non fatte**: questo di function unisce i parametri data e context delle Event-driven function basando il processo su un Function network e sulle Cloud run. 
 
-Nel caso di **HTTP Function** inseriamo:
+Nel caso di **HTTP Function** dovremo gestire il traffico delle richieste che HTTP che arrivano alla function. Se dobbiamo rispondere solamente ad un path speficifico usiamo `.path 
 ```python
 from flask import Flask, request
 
 db = firestore.Client(database="NOME_DATABASE")
 
 def HTTP_FUNCTION(request):
+    path = request.path
+    pages = path.split('/')
 
     return 'STRING'
 ```
@@ -597,62 +620,95 @@ def EVENT_FUNCTION(data, context):
 ```
 Il metodo `.params["KEY"]` viene usato per accedere al dizionario creato dall'uso delle wildcard (.../temp/{day} --> Usiamo 'day' come KEY), mentre grazie `.resource.split('/')[-1]` possiamo ottenere dal path completo il nome del documento.
 
-Talvolta viene richiesto di creare una **web function** per uno specifico path e questo può essere fatto come viene spiegato nel [capitolo 4](#4---web-application). Si inserisce quindi:
-```python
-from flask import Flask, render_template, request, redirect
-
-app = Flask(__name__)
-
-@app.route('/path/<PARAM>', methods=['GET', 'POST', 'PUT'])
-def nome_della_funzione(PARAM):
-    if request.method == 'POST':
-        cform = Classeform(request.form)
-        object_dao.add_element(cform.name.data, cform.red.data)
-        
-        return redirect("/path/" + cform.name.data, code=302)
-    
-    element = object_dao.get_element_by_name(PARAM)
-
-    if request.method == 'GET':
-        cform=Classeform(obj=Struct(**element))
-        cform.name.data = PARAM
-    return render_template("TEMPLATE_HTML", PARAMETRI...)
-```
-
 ## 6.2 - Deploy
-
-Struttura per --trigger-resource=
-projects/[PROJECT_ID]/databases/[DATABASE_ID]/documents/[PATH_AL_DOCUMENTO]
-il PATH_AL_DOCUMENTO potrebbe essere sostituito con il path completo (.../NOME_COLLECTION/NOME_DOCUMENTO) oppure dal nome della collection e una wildcard che ci permette di osservare tutti i cambiamenti su tutta la collection (.../NOME_COLLECTION/{NOME_DOCUMENTO}). Nell'ultimo caso non è importante la stringa che sostituisce NOME_DOCUMENTO perché svolge il ruolo di segnaposto. Utilizzando in questo modo le wildcard osserviamo solamente i cambiamenti per quel livello. Se invece vogliamo che la funzione sia triggerata anche dai cambiamenti più a valle di quel punto allora inserisco all'interno della wildcard ==** che indica un livello di osservabilità dei cambiamenti iterativo che va in profondità (.../{WILD_CARD==\*\*}). L'osservabilità viene fatta solo sui documenti se non vogliamo usare (==**)  
-
-Da eseguire nel terminale quando sono nella cartella creata
+**Tutti** i seguenti comandi saranno da eseguire mentre ci troviamo all'interno della cartella **func_stat/**. Verifichiamo se le varibili d'ambiente `PROJECT_ID` e `NAME` sono ancora valide:
 ```bash
+echo PROJECT_ID = ${PROJECT_ID}
+echo NAME = ${NAME}
+```
+**Se non sono più valide** le settiamo attraverso i seguenti comandi: 
+```bash
+export PROJECT_ID=MY_PROJECT
+echo $PROJECT_ID
+```
+```bash
+export NAME=USER_NAME
+echo $NAME
+```
+Creiamo le credenziali e le salviamo in credentials.json
+```bash
+gcloud projects add-iam-policy-binding ${PROJECT_ID} --member "serviceAccount:${NAME}@${PROJECT_ID}.iam.gserviceaccount.com" --role "roles/owner"
 touch credentials.json 
 gcloud iam service-accounts keys create credentials.json --iam-account ${NAME}@${PROJECT_ID}.iam.gserviceaccount.com 
+```
+Esportiamo le credenziali:
+```bash
 export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
 ```
-
+Attiviamo il service per le function su gcloud
 ```bash
 gcloud services enable cloudfunctions.googleapis.com
 ```
+Il procedimento del deployment da qui in avanti è specifico rispetto al tipo di Function che andiamo a svolgere. Distinguiamo quindi il deplyment per le HTTP Function e quelle Event-driven.
 
+### HTTP Function
+Definiamo il nome della funzione che dovrà essere invocata dalla richiesta HTTP:
 ```bash
-export FUNCTION_NAME=NAME
+export FUNCTION=NOME_FUNZIONE
+echo FUNCTION = ${FUNCTION}
+```
+Definiamo il runtime che dovrà essere utilizzato:
+```bash
 export RUNTIME=python310
-echo Description: && echo - FUNCTION_NAME: ${FUNCTION_NAME} && echo - RUNTIME: ${RUNTIME}
+echo RUNTIME = ${RUNTIME}
 ```
-
+Possiamo quindi eseguire il deploy della HTTP function dove con `--no-gen2` specifichiamo che è una function *gen 1*.
 ```bash
-gcloud functions deploy ${FUNCTION_NAME} --runtime ${RUNTIME} --trigger-http --allow-unauthenticated --docker-registry=artifact-registry --no-gen2
+export FUNCTION=get_status
+gcloud functions deploy ${FUNCTION} --runtime ${RUNTIME} --trigger-http –allow-unauthenticated --docker-registry=artifact-registry --no-gen2
 ```
-
+Per eseguire il testing possiamo utilizzare l'indirizzo HTTP della funzione a cui aggiungiamo il path che vogliamo verificare. Usando il seguente comando possiamo ottenere una descrizione della function che contiene anche il suo indirizzo HTTP.
 ```bash
-gcloud app deploy app.yaml
+gcloud functions describe $FUNCTION
 ```
 
-## 6.3 - Testing
-Per eseguire il testing 
-```python
-if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8080, debug=True)
+### Event driven Function
+Per prima cosa dobbiamo definire le seguenti variabili globali:
+```bash
+export FUNCTION=NOME_FUNZIONE
+echo FUNCTION = ${NOME_FUNZIONE}
 ```
+```bash
+export RUNTIME=python310
+echo RUNTIME = ${RUNTIME}
+```
+```bash
+export DATABASE=NOME_DATABASE
+echo DATABASE = ${DATABASE}
+```
+```bash
+export COLLECTION=COLLECTION_NAME
+echo COLLECTION = ${COLLECTION}
+```
+Verifichiamo di aver impostato correttamente tutte le variabili globali:
+```bash
+echo FUNCTION   = ${NOME_FUNZIONE}
+echo RUNTIME    = ${RUNTIME}
+echo DATABASE   = ${DATABASE}
+echo COLLECTION = ${COLLECTION}
+```
+Decidiamo che tipo di eventi vogliamo osservare `--trigger-event="..."`:
+* `--trigger-event="providers/cloud.firestore/eventTypes/document.create`: quando viene creato un nuovo documento.
+* `--trigger-event="providers/cloud.firestore/eventTypes/document.update`: quando un documento che esiste già viene modificato.
+* `--trigger-event="providers/cloud.firestore/eventTypes/document.delete`: quando viene rimosso un documento.
+* `--trigger-event="providers/cloud.firestore/eventTypes/document.write`: quando un documento viene creato e aggiornato.
+
+Definiamo il path delle risorse da osservare per generare gli eventi. La struttura del path è così composta: `projects/[PROJECT_ID]/databases/[DATABASE_ID]/documents/[PATH_AL_DOCUMENTO]`. Definendo `PATH_AL_DOCUMENTO` come `.../COLLECTION/NOME_DOC` andiamo però ad osservare solo quel documento specifico. Per osservare i cambiamenti all'interno di una collection dobbiamo usare le **wildcard**. Definiamo quindi `PATH_AL_DOCUMENTO` come `.../COLLECTION/{NAME}` dove `NAME` è soltanto un segnaposto e corrisponderà alla **key** del dizionario che verrà usata per ottenere il nome del documento su cui è stato osservato l'evento. 
+
+Usando le wildcard in questo modo possiamo osservare i cambiamenti *solo* per i documenti al "livello" specificato, mentre se vogliamo osservare anche i cambiamenti più in profondità (*utile per le subcollection*) inseriamo nella wildcard `.../{NAME==**}`. Bisogna tenere a mente che l'osservabilità viene comunque sempre fatta sui documenti, ovvero sono sempre loro che determinano lo scatenarsi di un evento.
+
+Con questo comando andiamo eseguire il deploy della funzione `$(FUNCTION)`, usando `$(RUNTIME)`, osservando i cambiamenti sul path specificato.
+```bash
+gcloud functions deploy ${FUNCTION} --runtime=${RUNTIME} --trigger-event="providers/cloud.firestore/eventTypes/document.write" --trigger-resource="projects/${PROJECT_ID}/databases/${DATABASE}/documents/${COLLECTION}/{KEY}” --docker-registry=artifact-registry --no-gen2
+```
+
