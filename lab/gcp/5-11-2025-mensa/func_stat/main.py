@@ -10,6 +10,7 @@ def update_report(data, context):
     data = data['value']
     print(data)
 
+    return 
     c_ref = db.collection('riepiloghi')
     c = c_ref.document(data["data"]).get()
     mean_week = self.helper(data["data"])

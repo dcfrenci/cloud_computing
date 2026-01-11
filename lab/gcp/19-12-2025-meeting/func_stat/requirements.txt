@@ -1,0 +1,4 @@
+google-cloud-firestore==2.22.0
+
+# Se contiene una HTTP function 
+flask==2.3.3

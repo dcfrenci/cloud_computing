@@ -1,3 +1,5 @@
-flask==2.3.3
 google-cloud-firestore==2.22.0
+
+# Se contiene una web application 
+flask==2.3.3
 gunicorn==23.0.0

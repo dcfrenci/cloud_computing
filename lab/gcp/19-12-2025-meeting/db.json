@@ -1,0 +1,10 @@
+[
+    {"data": "2026-01-10", "colpevole": "Lorenzo", "vittime": ["Teresa", "Filippo", "Francesco"], "durata": 2, "orario_inizio": "10:30"},
+    {"data": "2026-01-10", "colpevole": "Matteo", "vittime": ["Teresa", "Filippo", "Francesco"], "durata": 2, "orario_inizio": "14:30"},
+    {"data": "2026-01-11", "colpevole": "Lorenzo", "vittime": ["Teresa", "Filippo", "Francesco"], "durata": 0.5, "orario_inizio": "12:30"},
+    {"data": "2026-01-12", "colpevole": "Riccardo", "vittime": ["Lorenzo", "Teresa", "Filippo", "Francesco"], "durata": 5.5, "orario_inizio": "09:30"},
+    {"data": "2026-01-13", "colpevole": "Giacomino", "vittime": ["Teresa", "Francesco"], "durata": 3, "orario_inizio": "09:30"},
+    {"data": "2026-01-14", "colpevole": "Lorenzo", "vittime": ["Teresa", "Filippo", "Francesco"], "durata": 4, "orario_inizio": "09:30"},
+    {"data": "2026-01-15", "colpevole": "Filippo", "vittime": ["Teresa", "Lorenzo", "Francesco"], "durata": 1.5, "orario_inizio": "11:30"},
+    {"data": "2026-01-16", "colpevole": "Lorenzo", "vittime": ["Teresa", "Filippo", "Francesco"], "durata": 2.5, "orario_inizio": "14:30"}
+]
