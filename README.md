@@ -583,13 +583,15 @@ Per la definizione della Function dobbiamo comprendere la sua tipologia:
 * **Event-driven Function (Gen 1)**: questo tipo di function accetta due parametri data e context e sono utilizzate solitamente da eventi come Pub/Sub o Firestore.
 * Cloud Functions (Gen 2) --> **Non fatte**: questo di function unisce i parametri data e context delle Event-driven function basando il processo su un Function network e sulle Cloud run. 
 
-Nel caso di **HTTP Function** dovremo gestire il traffico delle richieste che HTTP che arrivano alla function. Se dobbiamo rispondere solamente ad un path speficifico usiamo `.path 
+Nel caso di **HTTP Function** dovremo gestire il traffico delle richieste che HTTP che arrivano alla function. Se dobbiamo rispondere solamente ad una request di tipo specifico usiamo `request.method==GET` o se solamente ad un path speficifico usiamo `.path`. 
 ```python
 from flask import Flask, request
 
 db = firestore.Client(database="NOME_DATABASE")
 
 def HTTP_FUNCTION(request):
+    if request.method == 'GET':
+
     path = request.path
     pages = path.split('/')
 
@@ -613,8 +615,8 @@ Nel caso di **Event-driven Function** sappiamo che data è un dizionario a cui p
 db = firestore.Client(database="NOME_DATABASE")
 
 def EVENT_FUNCTION(data, context):
-    document = data["value"]
-    value = context.params["KEY"]
+    document = data['value']
+    value = context.params['KEY']
     document_name = context.resource.split('/')[-1]
 
 ```
