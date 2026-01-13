@@ -3,8 +3,23 @@ Questa guida consiste in una schematizzazione dei passaggi e delle procedure ric
 
 ## Index
 * [Network definition](#1---network-definition)
+    * [Structure](#11---structure)
+        * [FILE.ned](#filened)
+        * [FILE.ini.mako](#fileinimako)
+    * [Commands](#12---commands)
 * [Compute results](#2---parse-results)
+    * [Commands](#21---commands)
 * [Analyze results](#3---analyze-results)
+    * [Structure](#31---structure)
+        * [configFILE.json](#configfilejson)
+    * [Commands](#32---commands)
+* [Components](#components)
+    * [Source](#source)
+    * [Router](#router)
+    * [Queue](#queue)
+    * [Delay](#delay) 
+    * [Sink](#sink)
+* [Formulas]
 
 ## Setting the enviroment
 Per prima cosa ci si posizioni all'interno della cartella dove omnet è installato `.../omnet--version/`. Si attivi l'enviroment e ci si posizioni nella cartella dove si svolgerà l'esercizio.
@@ -454,3 +469,25 @@ Visibile anche con il comando seguente eseguito dalla cartella di installazione 
 ```bash
 cat samples/queueinglib Sink.ned
 ```
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
+# Formulas
+Sono quindi riassunte alcune tra le formule più utili: 
+
+**Tempo d'arrivo** come funzione del tempo d'arrivo: 
+$$
+T_{resp} = \frac{1}{\mu - \frac{\lambda}{N}}
+$$
+Formula di **Pollaczek-Khinchin**
+$$
+N \geq \left\lceil \frac{\Lambda}{\mu} \cdot \frac{\text{CoV}^2 - 2K - 1}{2K - 2} \right\rceil
+$$

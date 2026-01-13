@@ -49,6 +49,10 @@ Si creino i seguenti file:
 * requirements.txt  --> Per definire le librerie necessarie
 * .gcloudignore     --> Per specificare i file da **non** caricare su gcloud
 * .gitingnore       --> Per specificare i file da **non** caricare su github
+Per creare velocemente i file:
+```bash
+code requirements.txt .gcloudignore .gitignore
+```
 
 ### requirements.txt
 Creiamo il file **requirements.txt**.
@@ -152,6 +156,10 @@ https://console.cloud.google.com/firestore/databases?hl=it&project=PROJECT_ID
 Prima di fare il deployment del database è necessario creare alcuni file necessari per il suo corretto funzionamento.
 * db.json --> Usato per inizializzare il database con dei dati
 * file_firestore.py --> Usato per gestire la creazione/modifica/eliminazione dei dati
+Per creare velocemente i file:
+```bash
+code db.json file_firestore.py
+```
 
 ### db.json
 La struttura è caratteristica di ogni esercizio, tuttavia corrisponde con una lista di dizionari `[{...}, {...}, {...}]`. Segue un esempio:
@@ -247,6 +255,10 @@ Dalla lettura del file **dettagli_api.yaml** fornito, estraiamo i *metodi* da im
 Per eseguire il deployment di API RESTful dobbiamo definire i seguenti file:
 * api.py    --> Usato per gestire metodi HTTP/Codici/Paths
 * api.yaml  --> Usato per definire il deployment dell'app su gcloud
+Per creare velocemente i file:
+```bash
+code api.py api.yaml
+```
 
 ### api.py
 Utilizziamo questo file per definire i metodi HTTP a cui l'API può rispondere e i vari codici che dovranno essere restituiti. Definiamo per prima cosa gli import:
@@ -310,7 +322,7 @@ automatic_scaling:
 # Specifica quale app utilizzare per creare il servizio (es. api:app -> seleziona app da api.py)
 entrypoint: gunicorn api:app
 # Specifica il nome del servizio
-service: api
+service: default
 
 # Definiscono come il server gestisce i metadata delle richieste HTTP
 handlers:
@@ -353,6 +365,11 @@ Per poter eseguire il deployment di questa web app dobbiamo crerare i seguenti f
 * static/       --> Cartella in cui raggruppiamo tutti i file statici
 * main.py       --> Usato per gestire tutta l'applicazione
 * app.yaml      --> Usato per definire il deployment su gcloud
+Per creare velocemente i file:
+```bash
+mkdir templates
+code main.py app.yaml
+```
 
 ### templates/
 Creiamo la cartella **templates** al cui interno inseriremo i file HTML che andranno a costituire i template della pagine dell'applicazione web. Per poter inserire delle strutture dinamiche si fa utilizzo di parametri che vengono passati come argomento quando si renderizzano i template. Seguono alcune strutture utili.
@@ -396,6 +413,11 @@ Questa struttura crea una tabella dove di definiscono prima le colonne all'inter
 * `<td>` --> Definisce una cella con testo semplice
 ```html
 <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    </head>
     <body>
         <table class="table text-center">
             <thead>
@@ -408,6 +430,7 @@ Questa struttura crea una tabella dove di definiscono prima le colonne all'inter
                 <tr>
                     <th scope="row">Cella 1 per riga 1</th>
                     <td style="text-align: center">Cella 2 per riga 2</td>
+                    <td style="text-align: center"><a href="/PATH/{{c}}">{{c}}</a></td>
                 </tr>
             </tbody>
         </table>
@@ -456,18 +479,18 @@ Definiamo quindi le funzioni che gestiscono i metodi dell'applicazione (**GET, P
 Questo deve essere fatto **per ogni path** da cui possiamo ricevere richieste.
 ```python
 @app.route('/path', methods=['GET']) 
-def nome_della_funzione():
+def function_base():
     return render_template("TEMPLATE_HTML", PARAMETRI...)
 
 @app.route('/path/<PARAM>', methods=['GET', 'POST'])
-def nome_della_funzione(PARAM):
+def function_specific(PARAM):
     if request.method == 'POST':
         cform = Classeform(request.form)
-        object_dao.add_element(cform.name.data, cform.red.data)
+        db_dao.add_element(cform.name.data, cform.red.data)
         
         return redirect("/path/" + cform.name.data, code=302)
     
-    element = object_dao.get_element_by_name(PARAM)
+    element = db_dao.get_element_by_name(PARAM)
 
     if request.method == 'GET':
         cform=Classeform(obj=Struct(**element))
@@ -476,7 +499,7 @@ def nome_della_funzione(PARAM):
 ```
 Il secondo path che dobbiamo gestire risulta essere variabile poiché è presente un parametro dopo una parte che che rimane costante `/path/<PARAM>`. Questo dovrà essere inserito come parametro della nostra funzione (**scritto nello stesso modo**) in modo da poterlo utilizzare.
 
-Per il metodo **GET** sfruttiamo la classe `Struct` che permette di inizializzare il form con i dati del colore `s_color`.
+Per il metodo **GET** sfruttiamo la classe `Struct` che permette di inizializzare il form con i dati del colore `s_color`. Verranno inizializzati solamente i campi con le chiavi combacianti.
 ```python
 class Struct:
     def __init__(self, **entries):
@@ -493,7 +516,7 @@ automatic_scaling:
   max_instances: 1
 
 entrypoint: gunicorn main:app
-service: default
+service: web
 
 handlers:
 - url: /static
@@ -552,9 +575,9 @@ Si devono quindi creare questi file:
     * main.py           --> Usato per gestire tutte le funzionalità
 Per creare velocemente i file:
 ```bash
-code requirements.txt
-code .gcloudignore
-code main.py
+mkdir func_stat
+cd func_stat
+code requirements.txt .gcloudignore main.py
 ```
 
 ### requirements.txt
@@ -677,7 +700,7 @@ gcloud functions deploy ${FUNCTION} --runtime ${RUNTIME} --trigger-http –allow
 ```
 Per eseguire il testing possiamo utilizzare l'indirizzo HTTP della funzione a cui aggiungiamo il path che vogliamo verificare. Usando il seguente comando possiamo ottenere una descrizione della function che contiene anche il suo indirizzo HTTP.
 ```bash
-gcloud functions describe $FUNCTION
+gcloud functions describe ${FUNCTION}
 ```
 
 ### Event driven Function
@@ -719,4 +742,5 @@ Con questo comando andiamo eseguire il deploy della funzione `$(FUNCTION)`, usan
 ```bash
 gcloud functions deploy ${FUNCTION} --runtime ${RUNTIME} --trigger-event "providers/cloud.firestore/eventTypes/document.write" --trigger-resource "projects/${PROJECT_ID}/databases/${DATABASE}/documents/${COLLECTION}/{KEY}" --docker-registry=artifact-registry --no-gen2
 ```
+Per verificare se la Function è correttamente funzionante si utilizzi la funzione *Esplora log* sulla suite gcloud.
 
