@@ -550,6 +550,12 @@ Si devono quindi creare questi file:
     * requirements.txt  --> Definisce le librerie necessarie
     * .gcloudignore     --> Definisce i file da non caricare su gcloud
     * main.py           --> Usato per gestire tutte le funzionalità
+Per creare velocemente i file:
+```bash
+code requirements.txt
+code .gcloudignore
+code main.py
+```
 
 ### requirements.txt
 Creiamo il file **requirements.txt**:
@@ -678,7 +684,7 @@ gcloud functions describe $FUNCTION
 Per prima cosa dobbiamo definire le seguenti variabili globali:
 ```bash
 export FUNCTION=NOME_FUNZIONE
-echo FUNCTION = ${NOME_FUNZIONE}
+echo FUNCTION = ${FUNCTION}
 ```
 ```bash
 export RUNTIME=python310
@@ -694,7 +700,7 @@ echo COLLECTION = ${COLLECTION}
 ```
 Verifichiamo di aver impostato correttamente tutte le variabili globali:
 ```bash
-echo FUNCTION   = ${NOME_FUNZIONE}
+echo FUNCTION   = ${FUNCTION}
 echo RUNTIME    = ${RUNTIME}
 echo DATABASE   = ${DATABASE}
 echo COLLECTION = ${COLLECTION}
@@ -711,6 +717,6 @@ Usando le wildcard in questo modo possiamo osservare i cambiamenti *solo* per i 
 
 Con questo comando andiamo eseguire il deploy della funzione `$(FUNCTION)`, usando `$(RUNTIME)`, osservando i cambiamenti sul path specificato.
 ```bash
-gcloud functions deploy ${FUNCTION} --runtime=${RUNTIME} --trigger-event="providers/cloud.firestore/eventTypes/document.write" --trigger-resource="projects/${PROJECT_ID}/databases/${DATABASE}/documents/${COLLECTION}/{KEY}” --docker-registry=artifact-registry --no-gen2
+gcloud functions deploy ${FUNCTION} --runtime ${RUNTIME} --trigger-event "providers/cloud.firestore/eventTypes/document.write" --trigger-resource "projects/${PROJECT_ID}/databases/${DATABASE}/documents/${COLLECTION}/{KEY}" --docker-registry=artifact-registry --no-gen2
 ```
 

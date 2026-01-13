@@ -3,7 +3,7 @@ Questa guida consiste in una schematizzazione dei passaggi e delle procedure ric
 
 ## Index
 * [Network definition](#1---network-definition)
-* [Parse results](#2---parse-results)
+* [Compute results](#2---parse-results)
 * [Analyze results](#3---analyze-results)
 
 ## Setting the enviroment
@@ -11,6 +11,7 @@ Per prima cosa ci si posizioni all'interno della cartella dove omnet è installa
 ```bash
 . setenv
 cd samples/queuenet/
+code .
 ```
 Definiamo poi il `FILE_NAME` che sarà utilizzato per creare automaticamente i file **FILE_NAME.ned**, **FILE_NAME.ini.mako** e **FILE_NAME.ini**.
 ```bash
@@ -74,9 +75,13 @@ network NETWORK {
         double lambda = mu * rho;
         
         srv.capacity = K;
-        # Usiamo 1s per definire l'unità di misura 
-        srv.serviceTime = 1s * exponential(1 / mu);
+
+        # Definiamo interArrivalTime per le Source (1 / lambda)
         src.interArrivalTime = 1s * exponential(1 / lambda);
+
+        # Definiamo il serviceTime per le Queue (1 / mu)
+        srv.serviceTime = 1s * exponential(1 / mu);
+
 
     submodules:
         src     : Source;
@@ -114,7 +119,7 @@ Si può sfuttare la dicitura `extends=NOME_CONFIGURAZIONE` se si vuole creare un
 [Config NOME_CONFIGURAZIONE]
 extends = EXT_NOME_CONFIGURAZIONE
 **.lambda = 200
-**.srv[*].queueLenght.result-recording-modes = + histogram
+**.srv[*].queueLenght.result-recording-modes =+ histogram
 **.router.randomGateIndex=(uniform(0, 10.0) <= 6.0 ? 0 : 1)
 ```
 Grazie all'utilizzo dei cicli **for** è possibile definire più configurazioni ed utilizzare i gli elementi su cui il for esegue i cicli tramite `${INDICE}`. 
@@ -146,7 +151,7 @@ Per verificare se la network è stata correttamente si può utilizzare il seguen
 ###
 ###
 ###
-# 2 - Parse results
+# 2 - Computing results
 Questa sezione si occupa della creazione dei results attraverso la simulazione delle configurazioni specificate. 
 
 ## 2.1 - Commands
@@ -176,6 +181,8 @@ make -j $(nproc) -f Runfile
 ###
 ###
 # 3 - Analyze results
+Questa sezione si occupa dell'analisi dei results con la creazione del `FILE.data`.
+
 ## 3.1 - Structure
 Per analizzare i risultati abbiamo bisogno:
 * configFILE.json --> Usato per estrarre i dati desiderati dalla cartella `results/`
@@ -192,41 +199,130 @@ All'interno del file definiamo le strutture:
 * **histograms**: si definisce l'origine dei dati per l'histogram
 * **analyses**: si definisce il nome dell'analyses e viene utilizzato per creare i file .data/histogram 
     * Definisce un histogram:
-        * *outfile*: nome del file di output
-        * *scenario*: 
-        * *histogram*: 
+        * *outfile*: nome del file di output (type = .data)
+        * *scenario*: si ripetono i parametri di *scenario_schema*
+        * *histogram*: nome dell'histogram
     * Definisce una tabella:
-        * *outfile*: nome del file di output
+        * *outfile*: nome del file di output (type = .data)
         * *scenario*: 
-        * *metrics*: 
+            * *fixed*: parametri che vengono mantenuti fissi
+            * *range*: parametri che vengono utilizzati per creare le righe della tabella
+        * *metrics*: selezioniamo le metriche che si vogliono inserire (si scelgono dalla sezione **metrics**)
 
+Definiamo il **configFile.json**:
+```json
+{
+    "scenario_schema": {
+        "rho": {"pattern": "**.rho", "type": "real"},
+        "K": {"pattern": "**.K", "type": "int"}
+    },
+    "metrics": {
+        "TotalJobs": {"module": "**.src", "scalar_name": "created:last" ,"aggr": ["none"]},
+        "DroppedJobs": {"module": "**.srv", "scalar_name": "dropped:count" ,"aggr": ["none"]},
+        "QLen": {"module": "**.srv", "scalar_name": "queueLength:timeavg" ,"aggr": ["none"]},
+        "Utilization": {"module": "**.srv", "scalar_name": "busy:timeavg" ,"aggr": ["none"]},
+        "PQueue": {"module": "**.sink", "scalar_name": "queuesVisited:mean" ,"aggr": ["none"]},
+        "ServiceTime": {"module": "**.sink", "scalar_name": "totalServiceTime:mean" ,"aggr": ["none"]},
+        "WaitingTime": {"module": "**.sink", "scalar_name": "totalQueueingTime:mean" ,"aggr": ["none"]},
+        "ResponseTime": {"module": "**.sink", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]}
+    },
+    "analyses": {
+        "Analysis_1": {
+            "outfile": "results/analysis_1.data",
+            "scenarios": {
+                "fixed": {"K": "-1"},
+                "range": ["rho"]
+            },
+            "metrics": [
+                {"metric": "TotalJobs", "aggr": "none"},
+                {"metric": "DroppedJobs", "aggr": "none"},
+                {"metric": "PQueue", "aggr": "none"},
+                {"metric": "ServiceTime", "aggr": "none"},
+                {"metric": "WaitingTime", "aggr": "none"},
+                {"metric": "ResponseTime", "aggr": "none"}
+            ]
+        },
+        "Analysis_2": {
+            "outfile": "results/analysis_2.data",
+            "scenarios": {
+                "fixed": {"K": "10"},
+                "range": ["rho"]
+            },
+            "metrics": [
+                {"metric": "TotalJobs", "aggr": "none"},
+                {"metric": "DroppedJobs", "aggr": "none"},
+                {"metric": "PQueue", "aggr": "none"},
+                {"metric": "ServiceTime", "aggr": "none"},
+                {"metric": "WaitingTime", "aggr": "none"},
+                {"metric": "ResponseTime", "aggr": "none"}
+            ]
+        }
+    }
+}
+```
+Per realizzare dei grafici si utilizza la seguente struttura:
+```json
+{
+    "scenario_schema": {
+        "Balance": {"pattern": "**.Balance", "type": "varchar"},
+        "lambda1": {"pattern": "**.lambda1", "type": "real"},
+        "lambda2": {"pattern": "**.lambda2", "type": "real"},
+        "mu1": {"pattern": "**.mu1", "type": "real"},
+        "mu2": {"pattern": "**.mu2", "type": "real"}
+    },
+    "metrics": {
+        "PQueue1": {"module": "**.sink1", "scalar_name": "queuesVisited:mean" ,"aggr": ["none"]},
+        "ServiceTime1": {"module": "**.sink1", "scalar_name": "totalServiceTime:mean" ,"aggr": ["none"]},
+        "WaitingTime1": {"module": "**.sink1", "scalar_name": "totalQueueingTime:mean" ,"aggr": ["none"]},
+        "ResponseTime1": {"module": "**.sink1", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "PQueue2": {"module": "**.sink2", "scalar_name": "queuesVisited:mean" ,"aggr": ["none"]},
+        "ServiceTime2": {"module": "**.sink2", "scalar_name": "totalServiceTime:mean" ,"aggr": ["none"]},
+        "WaitingTime2": {"module": "**.sink2", "scalar_name": "totalQueueingTime:mean" ,"aggr": ["none"]},
+        "ResponseTime2": {"module": "**.sink2", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]}
+    },
+    "histograms": {
+        "SinkTime1": {"module": "**.sink1", "histogram_name": "lifeTime:histogram"},
+        "SinkTime2": {"module": "**.sink2", "histogram_name": "lifeTime:histogram"}
+    },
+    "analyses": {
+        "Hist_LB_US1": {
+            "outfile": "results/MM1_LB_Unbalanced_Source_Nobal1.data",
+            "scenario": {"mu1": "5.0", "mu2": "5.0", "lambda1": "4.5", "lambda2": "2.0", "Balance":"NoBal"},
+            "histogram": "SinkTime1"
+        },        
+        "Hist_LB_US2": {
+            "outfile": "results/MM1_LB_Unbalanced_Source_Nobal2.data",
+            "scenario": {"mu1": "5.0", "mu2": "5.0", "lambda1": "4.5", "lambda2": "2.0", "Balance":"NoBal"},
+            "histogram": "SinkTime2"
+        }
+    }
+}
+```
 
 ## 3.2 - Commands
 Grazie a questo comando si utilizza il file `configFILE.json` per estrarre i dati dai *files.sca* e salvarli all'interno del nostro database. 
 ```bash
-parse_data.py -c config${FILE_NAME}.json -d database.db -r rusults/NOME*.sca
+python3 ../../omnet_analyzer/parse_data.py -c config${FILE_NAME}.json -d database.db -r results/NOME*.sca
 ```
 Per visualizzare il database che abbiamo creato usiamo: 
 ```bash
 sqlitebrowser database.db
 ```
-
-
-
-# Anaylize data
 Crea i file .data che abbiamo specificato all'interno del .json (in *analyses*), al cui interno sarà presente una tabella con i dati organizzati seguendo sempre le specifiche del .json.
 ```bash
-analyze_data.py -c configNOME.json -d DATABASE.db
+python3 ../../omnet_analyzer/analyze_data.py -c config${FILE_NAME}.json -d database.db
 ```
-
-
-
-
-
-
-
-
-
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
 # Components
 Segue una definizione dettagliata dei principali componenti che possono essere utilizzati all'interno di Omnet. 
 
@@ -308,7 +404,7 @@ cat samples/queueinglib Queue.ned
 
 ## Delay
 Questo modulo ha il compito di rallentare i messaggi di un tempo predefinito. Il tempo di ritardo può essere determinato come fisso o può essere una distribuzione. L'ordine dei messaggi in arrivo e in uscita **non è** potrebbe non essere lo stesso.
-```
+```ned
 simple Delay
 {
     parameters:
@@ -329,7 +425,7 @@ cat samples/queueinglib Delay.ned
 
 ## Sink
 Questo modulo ha il compito di distruggere (o opzionalmente di salvare) i pacchetti e di raccogliere le statistiche. 
-```
+```ned
 simple Sink
 {
     parameters:
@@ -358,185 +454,3 @@ Visibile anche con il comando seguente eseguito dalla cartella di installazione 
 ```bash
 cat samples/queueinglib Sink.ned
 ```
-
-
-
-
-
-
-
-
-
-
-# file.ned
-
-```ned
-import org.omnetpp.queueing.Queue;
-import org.omnetpp.queueing.Source;
-import org.omnetpp.queueing.Sink;
-
-network NETWORK {
-
-    parameters:
-        int K = default(10);
-        double rho = default(0.8);
-        double mu = default(10);
-        double lambda = mu * rho;
-        
-        srv.capacity = K;
-        # Usiamo 1s per definire l'unità di misura 
-        srv.serviceTime = 1s * exponential(1 / mu);
-        src.interArrivalTime = 1s * exponential(1 / lambda);
-
-    submodules:
-        src: Source;
-        srv: Queue;
-        sink: Sink;
-
-    connections:
-        src.out --> srv.in++;
-        srv.out --> sink.in++;
-    
-}
-```
-Per sapere quali sono i parametri per un determinato oggetto possiamo utilizzare il suo file .ned che si trova nel path `samples/queuinglib/NOME_DEL_FILE`
-
-Per sapere se nelle connections dobbiamo usare `.++` dobbiamo sempre guardare il file .ned del modulo e per quelli che presentano un input/output con un array dobbiamo metterli, altrimenti no. 
-
-
-# file.ini.mako
-```ini
-[General]
-ned-path = .;../queueinglib
-network = NETWORK
-repeat = 5
-cpu-time-limit = 60s
-sim-time-limit = 10000s
-**.vector-recording = false
-
-%for K in [5, 7, 10, -1]:
-
-%for rho in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.85. 0.88, 0.9]:
-[Config CONF_rho${"%03d" % int(rho * 100)}_K${K if K > 0 else "inf"}]
-
-**.srv.queueLenght.result-recording-modes = + histogram
-**.sink.lifeTime.result-recording-modes = + histogram
-**.K = ${K}
-**.rho = ${rho}
-
-# Per specificare la politica di balancing del router
-**.Balance="Default"
-# Per bilanciare in modo differente il traffico (60% uno e 40% l'altro in questo caso)
-**.r.randomGateIndex=(uniform(0, 10.0) <= 6.0 ? 0 : 1)
-
-%endfor
-%endfor
-
-
-[Config CONF_2]
-extends = NOME_CONF_DA_ESTENDERE
-
-```
-
-** significa qualsiasi oggetto con qualsisi indentazione
-
-
-
-# Comandi
-
-```bash
-update_template.py
-```
-Dove K specifica la run desiderata (nell'esempio possiamo sceglire un numero J: `0<J<5`)
-```bash
-./queuenet -f FILE.ini NOME_CONFIGURAZIONE -rK
-```
-
-Per verificare quali dati sono stati prodotti
-```bash
-less results/NOME_CONFIGURAZIONE.TIPOLOGIA
-```
-* .sca file: contiene i dati scalari 
-* .vec file: contiene i vettori
-* .vci file: indice ai vettori, per migliorare le performance 
-
-
-# Estrazione dei dati dai results prodotti
-
-
-
-
-
-Questo comando prende tutte le configurazione per il numero di run che abbiamo impostato dal NOME_FILE.ini e crea un nuovo file Runfile che si comporta come un make file (si specifica come fare la compilazione dei file) in cui vengono inseriti anche tutte le dipendenze.
-```bash
-make_runfile.py -f NOME_FILE.ini
-```
-Dato che all'interno di Runfile abbiamo inserito tutte le dipendenze possiamo usare il comando make con l'opzione -j per lanciare in parallelo l'esecuzione su tutti i core.
-```bash
-make -j $(nproc) -f Runfile
-```
-
-
-
-# Parse results 
-Il risultato di tutte le simulazioni vengono inseriti nella cartella results. 
-
-### configNOME.json
-* 
-```json
-{
-    "scenario_schema": {
-        "Balance": {"pattern": "**.Balance", "type": "varchar"},
-        "lambda1": {"pattern": "**.lambda1", "type": "real"},
-        "lambda2": {"pattern": "**.lambda2", "type": "real"},
-        "mu1": {"pattern": "**.mu1", "type": "real"},
-        "mu2": {"pattern": "**.mu2", "type": "real"}
-    },
-    "metrics": {
-        "PQueue1": {"module": "**.sink1", "scalar_name": "queuesVisited:mean" ,"aggr": ["none"]},
-        "ServiceTime1": {"module": "**.sink1", "scalar_name": "totalServiceTime:mean" ,"aggr": ["none"]},
-        "WaitingTime1": {"module": "**.sink1", "scalar_name": "totalQueueingTime:mean" ,"aggr": ["none"]},
-        "ResponseTime1": {"module": "**.sink1", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
-        "PQueue2": {"module": "**.sink2", "scalar_name": "queuesVisited:mean" ,"aggr": ["none"]},
-        "ServiceTime2": {"module": "**.sink2", "scalar_name": "totalServiceTime:mean" ,"aggr": ["none"]},
-        "WaitingTime2": {"module": "**.sink2", "scalar_name": "totalQueueingTime:mean" ,"aggr": ["none"]},
-        "ResponseTime2": {"module": "**.sink2", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]}
-    },
-    "histograms": {
-        "SinkTime1": {"module": "**.sink1", "histogram_name": "lifeTime:histogram"},
-        "SinkTime2": {"module": "**.sink2", "histogram_name": "lifeTime:histogram"}
-    },
-    "analyses": {
-        "Hist_LB_US1": {
-            "outfile": "results/MM1_LB_Unbalanced_Source_Nobal1.data",
-            "scenario": {"mu1": "5.0", "mu2": "5.0", "lambda1": "4.5", "lambda2": "2.0", "Balance":"NoBal"},
-            "histogram": "SinkTime1"
-        },        
-        "Hist_LB_US2": {
-            "outfile": "results/MM1_LB_Unbalanced_Source_Nobal2.data",
-            "scenario": {"mu1": "5.0", "mu2": "5.0", "lambda1": "4.5", "lambda2": "2.0", "Balance":"NoBal"},
-            "histogram": "SinkTime2"
-        }
-    }
-}
-```
-
-Usando questo comando andiamo ad utilizzare il file .json per estrarre i dati dal file.sca e andarli a salvare all'interno del nostro database. 
-
-```bash
-parse_data.py -c configMM1.json -d DATABASE.db -r rusults/NOME*.sca
-```
-Per visualizzare il database che abbiamo creato usiamo: 
-```bash
-sqlitebrowser DATABASE.db
-```
-
-
-# Anaylize data
-Crea i file .data che abbiamo specificato all'interno del .json (in *analyses*), al cui interno sarà presente una tabella con i dati organizzati seguendo sempre le specifiche del .json.
-```bash
-analyze_data.py -c configNOME.json -d DATABASE.db
-```
-
-
-
