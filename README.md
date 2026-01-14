@@ -280,6 +280,17 @@ basePath = '/api/v1'
 ```
 Dalla lettura del file **dettagli_api.yaml** deduciamo i path e le relative risorse. Creiamo quindi *una classe per ogni path* che abbiamo identificato inserendo i *metodi* e ritornando `None, Codice` quando non è specificato lo `schema` altrimenti ritornando un dizionario con la struttura specificata all'interno della definizione.
 ```python
+def validate(d):
+    # Check presence of parameters
+    for key in ['key_list']:
+        if key not in d.keys():
+            return False
+    
+    # Check values
+
+    return True
+
+
 class Resource_UNO(Resource):
     def get(self, NOME_PARAMETRO):
         # Per ottenere i dati all'interno della request -> Otteniamo un dizionario
@@ -303,7 +314,7 @@ Ecco un esempio in cui il path possiede solamente un metodo e non è presente al
 ```python
 class Resource_DUE(Resource):
     def get(self):
-        return obj_list, 200
+        return obj, 200
 
 api.add_resource(Resource_DUE, f'{basePath}/path')
 ```
@@ -437,6 +448,20 @@ Questa struttura crea una tabella dove di definiscono prima le colonne all'inter
     </body>
 </html>
 ```
+Per aggiungere componenti in base a delle condizioni si può utilizzare **if di jinja**.
+```html
+
+<html>
+    <body>
+        {% if giorno == today %} 
+            <tr class="table-primary">Verificata</tr> 
+        {% else %} 
+            <tr>Non verificata</tr>
+        {% endif %}
+    </body>
+</html>
+```
+
 Questo componente permette di migliorare la UI e talvolta risulta essere necessario aggiungerlo per visualizzare delle classi css.
 ```html
 <head>
@@ -647,6 +672,15 @@ def EVENT_FUNCTION(data, context):
     document = data['value']
     value = context.params['KEY']
     document_name = context.resource.split('/')[-1]
+
+    new_value = data['value'] if len(data["value"]) != 0 else None
+    old_value = data['oldValue'] if len(data["oldValue"]) !=0 else None
+    if new_value and not old_value: # document added
+        pass
+    elif not new_value and old_value: # document removed
+        pass
+    else: # document updated
+        pass
 
 ```
 Il metodo `.params["KEY"]` viene usato per accedere al dizionario creato dall'uso delle wildcard (.../temp/{day} --> Usiamo 'day' come KEY), mentre grazie `.resource.split('/')[-1]` possiamo ottenere dal path completo il nome del documento.
