@@ -356,6 +356,7 @@ Per fare il testing inseriamo all'interno di **api.py** il codice seguente e pos
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
 ```
+In un altro terminale si esegua il file (dopo aver eseguito `source .venv/bin/activate`) **tester_yaml.py** che eseguirà in modo automatico tutti i test definiti all'interno di **tests.yaml**.
 ###
 ###
 ###
