@@ -618,10 +618,26 @@ if __name__ == '__main__':
 * publisher.py --> Usato per definire il publisher che andrà a creare i messaggi sul topic
 * subscriber.py --> Usato per una configurazione **pull**
 * pubsub.py --> Usato per una configurazione **push**
+    * requirements.txt  --> Per definire le librerie necessarie
+    * .gcloudignore     --> Per specificare i file da **non** caricare su gcloud
+    * app.yaml          --> Per specificare come fare il deployment su gcloud
 
 Si distinguono due possibili configurazioni:
 * **Pull**: è colui che è iscritto al topic a chiedere se sono presenti dei nuovi messaggi. 
 * **Push**: è il "topic" che invierà una notifica a coloro che sono iscritti al topic quando è presente un nuovo messaggio.
+
+Per creare i file della tipologia **pull**:
+```bash
+mkdir pub_sub
+cd pub_sub
+code publisher.py subscriber.py 
+```
+
+```bash
+mkdir pub_sub
+cd pub_sub
+code publisher.py pubsub.py requirements.txt .gcloudignore app.yaml 
+```
 
 ### publisher.py
 Da creare sia in caso di pull che di push.
@@ -710,6 +726,28 @@ def pubsub_push():
     
     return 'OK', 200
 ```
+### requirements.txt
+```
+Flask==3.1.2
+google-cloud-firestore==2.22.0
+google-cloud-pubsub==2.34.0
+gunicorn==23.0.0
+```
+
+### .gcloudignore
+```
+.git
+.gitignore
+
+# Python pycache:
+__pycache__/
+
+# virtual env
+.venv/
+# Ignored by the build system
+/setup.cfg
+credentials.json
+```
 
 ### app.yaml
 ```yaml
@@ -740,10 +778,15 @@ Creiamo il topic con il nome definito nella variabile globale `TOPIC`.
 ```bash
 gcloud pubsub topics create ${TOPIC}
 ```
-
+Se dobbiamo fare il deployment di una **configurazione pull**:
 ```bash
 gcloud pubsub subscriptions create ${SUBSCRIPTION_NAME} --topic ${TOPIC} --push-endpoint "https://${PROJECT_ID}.appspot.com/pubsub/push?token=${TOKEN}" --ack-deadline 10
 ```
+Se invece dobbiamo fare il deployment di una **configurazione push**:
+```bash
+gcloud app deploy app.yaml
+```
+
 ## 5.3 - Testing
 
 ###
