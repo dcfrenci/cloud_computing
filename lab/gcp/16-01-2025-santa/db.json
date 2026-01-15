@@ -1,0 +1,7 @@
+[
+    {"giver": {"email": "lorenzo@gmail.com", "firstName":"Lorenzo", "lastName": "Di maio"}, "receiver": {"email": "teresa@gmail.com", "firstName": "Teresa", "lastName": "Campo"}},
+    {"giver": {"email": "teresa@gmail.com", "firstName":"Teresa", "lastName": "Campo"}, "receiver": {"email": "francesco@gmail.com", "firstName": "Francesco", "lastName": "Della Casa"}},
+    {"giver": {"email": "francesco@gmail.com", "firstName":"Francesco", "lastName": "Della Casa"}, "receiver": {"email": "fabio@gmail.com", "firstName": "Fabio", "lastName": "Bozzoli"}},
+    {"giver": {"email": "fabio@gmail.com", "firstName":"Fabio", "lastName": "Bozzoli"}, "receiver": {"email": "filippo@gmail.com", "firstName": "Filippo", "lastName": "Gibertini"}},
+    {"giver": {"email": "filippo@gmail.com", "firstName":"Filippo", "lastName": "Gibertini"}, "receiver": {"email": "lorenzo@gmail.com", "firstName": "Lorenzo", "lastName": "Di maio"}}
+]

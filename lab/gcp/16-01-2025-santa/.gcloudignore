@@ -1,0 +1,11 @@
+.git
+.gitignore
+
+# Python pycache:
+__pycache__/
+
+# virtual env
+.venv/
+# Ignored by the build system
+/setup.cfg
+credentials.json
