@@ -186,8 +186,8 @@ class Classe_firestore(object):
     
     # Aggiunta di nuovi dati
     def add_element(self, DOCUMENT_NAME, PARM1, PARM2, PARM3):
-        colors_ref=self.db.collection('COLLECTION_NAME')
-        colors_ref.document(DOCUMENT_NAME).set({KEY1: PARM1, KEY2: PARM2, KEY3: PARM3})
+        c = self.db.collection('COLLECTION_NAME')
+        c.document(DOCUMENT_NAME).set({KEY1: PARM1, KEY2: PARM2, KEY3: PARM3})
 
     # Richiesta per un singolo dato
     def get_element_by_name(self, DOCUMENT_NAME):
@@ -418,6 +418,26 @@ Questa struttura crea un WTForm con le label e i valori associati che sono speci
     </body>
 </html>
 ```
+Se abbiamo più di un form all'interno della stessa pagina si deve utilizzare il parametro `name="PARAM` e `action="/path"`, seguendo questa struttura:
+```html
+<html>
+    <body>
+        <form method="POST" name="rform" action="/secretsanta/classeform">
+            Inserisci nome, cognome, email per unirti al secret santa:
+            <div>{{rform.firstName.label}}: {{rform.firstName}}</div>
+            <div>{{rform.lastName.label}}: {{rform.lastName}}</div>
+            <div>{{rform.email.label}}: {{rform.email}}</div>
+            <button>{{rform.submit}}</button>
+        </form>
+
+        <form method="POST" name="fform" action="/secretsanta/registration">
+            Per sapere a chi dovrai fare il regalo inserisci la tua email:
+            <div>{{fform.email.label}}: {{fform.email}}</div>
+            <button>{{fform.submit}}</button>
+        </form>
+    </body>
+</html>
+```
 Questa struttura crea una tabella dove di definiscono prima le colonne all'interno `<thead>` e poi le righe in `<tbody>`. Si utilizza:
 * `<tr>` --> Definisce una riga
 * `<th>` --> Definisce una cella con testo in **grassetto** e centrato automaticamente
@@ -489,9 +509,13 @@ from wtforms import Form, StringField, IntegerField, SubmitField, validators
 Per utilizzare i WTForm dichiariamo una classe che eredita da Form in cui spefichiamo i nomi e la tipologia di field e validators per i dati che saranno inseriti al loro interno.
 ```python
 class Classeform(Form):
-    name =  StringField('Name', [validators.Length(min=1, max=255)])
+    name =  StringField('Name', [validators.DataRequired()])
     red =   IntegerField('Red', [validators.NumberRange(min=0, max=255)])
     submit= SubmitField('Submit')
+
+class Registration(Form):
+    email = EmailField('Email address', [validators.DataRequired(), validators.Email()])
+    submit= SubmitField('Conferma inserimento')
 ```
 
 Creiamo la Web application
@@ -529,6 +553,19 @@ Per il metodo **GET** sfruttiamo la classe `Struct` che permette di inizializzar
 class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
+```
+Se si devono inserire due WTForm all'interno della stessa pagina si devono creae due metodi che rispondono a due path differenti.
+```python
+@app.route('/secretsanta/classeform', methods=['POST'])
+def function_specific():
+    rform = Classeform(request.form)
+    return render_template("add_member.html", rform=Classeform(), fform=Registration())
+    
+
+@app.route('/secretsanta/Registration', methods=['POST'])
+def function_finder():
+    fform=Registration(request.form)
+    return render_template("add_member.html", rform=Classeform(), fform=Registration())
 ```
 
 ### app.yaml
@@ -574,9 +611,91 @@ if __name__ == '__main__':
 ###
 ###
 ###
-# 5 - PubSub 
+# 5 - PubSub
+
 ## 5.1 - Structure
+
+### publisher.py
+```python
+import os
+from google.cloud import firestore
+from google.cloud import pubsub_v1
+
+update_interval = 10
+
+topic_name = os.environ['TOPIC'] if 'TOPIC' in os.environ.keys()  else 'TOPIC'
+project_id = os.environ['PROJECT_ID'] if 'PROJECT_ID' in os.environ.keys()  else 'PROJECT_ID'
+
+publisher = pubsub_v1.PublisherClient()
+topic_path = publisher.topic_path(project_id, topic_name)
+
+def notify(PARAM):
+
+    data={'key': 'value', 'key2': 'value2'}
+    res = publisher.publish(topic_path, json.dumps(data).encode('utf-8'))
+
+    print(data, res)
+
+if __name__=='__main__':
+    while True:
+        notify(PARAM)
+        time.sleep(update_interval)
+```
+
+### pubsub.py 
+```python
+import os
+from google.cloud import firestore
+from google.cloud import pubsub_v1
+
+app = Flask(__name__)
+app.config['PUBSUB_VERIFICATION_TOKEN'] = os.environ['PUBSUB_VERIFICATION_TOKEN']
+
+db = firestore.Client(database="NOME_DATABASE")
+
+
+@app.route('/pubsub/push', methods=['POST'])
+def pubsub_push():
+    print('Received pubsub push')
+    if request.args.get('token', '') != app.config['PUBSUB_VERIFICATION_TOKEN']:
+        return 'Invalid request', 400
+
+    envelope = json.loads(request.data.decode('utf-8'))
+    
+    return 'OK', 200
+```
+
+### app.yaml
+```yaml
+runtime: python313
+handlers:
+- url: /.*
+  script: auto
+env_variables:
+  PUBSUB_VERIFICATION_TOKEN: 'TOKEN'
+  PROJECT_ID: 'PROJECT_ID'
+  TOPIC: 'TOPIC'
+```
+
 ## 5.2 - Deploy
+
+```bash
+export TOPIC=TOPIC_NAME
+echo TOPIC = ${TOPIC}
+```
+
+```bash
+export TOKEN=123token
+echo TOKEN = ${TOKEN}
+export SUBSCRIPTION_NAME=SUBSCRIPTION_NAME
+echo SUBSCRIPTION_NAME = ${SUBSCRIPTION_NAME}
+```
+
+```bash
+gcloud pubsub subscriptions create ${SUBSCRIPTION_NAME} --topic ${TOPIC} --push-endpoint "https://${PROJECT_ID}.appspot.com/pubsub/push?token=${TOKEN}" --ack-deadline 10
+```
+
+
 ## 5.3 - Testing
 ###
 ###

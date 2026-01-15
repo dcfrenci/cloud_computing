@@ -13,6 +13,10 @@ Questa guida consiste in una schematizzazione dei passaggi e delle procedure ric
     * [Structure](#31---structure)
         * [configFILE.json](#configfilejson)
     * [Commands](#32---commands)
+* [Create table](#4---tables-and-histogram)
+    * [Structure](#41---structure)
+        * [table.py](#tablepy)
+        * [graph.py]
 * [Components](#components)
     * [Source](#source)
     * [Router](#router)
@@ -24,9 +28,9 @@ Questa guida consiste in una schematizzazione dei passaggi e delle procedure ric
 ## Setting the enviroment
 Per prima cosa ci si posizioni all'interno della cartella dove omnet è installato `.../omnet--version/`. Si attivi l'enviroment e ci si posizioni nella cartella dove si svolgerà l'esercizio.
 ```bash
+code .
 . setenv
 cd samples/queuenet/
-code .
 ```
 Definiamo poi il `FILE_NAME` che sarà utilizzato per creare automaticamente i file **FILE_NAME.ned**, **FILE_NAME.ini.mako** e **FILE_NAME.ini**.
 ```bash
@@ -53,8 +57,7 @@ In questa sezione saranno definiti i file per condurre le simulazioni, partendo 
 
 Creiamo i file `.ned` e `.ini.mako`:
 ```bash
-code ${FILE_NAME}.ned
-code ${FILE_NAME}.ini.mako
+code ${FILE_NAME}.ned ${FILE_NAME}.ini.mako
 ```
 
 ### FILE.ned
@@ -83,7 +86,7 @@ Si aggiunga poi la network definendone il nome e specificando **parameters**, **
 network NETWORK {
 
     parameters:
-        int N = default(10)
+        int N = default(10);
         int K = default(10);
         double rho = default(0.8);
         double mu = default(10);
@@ -107,7 +110,7 @@ network NETWORK {
 
     connections:
         src.out --> router++;
-        for i=0...N-1{
+        for i=0..N-1{
             router.out++ --> srv[i].in++;
             srv[i].out --> delay[i].in++;
             delay[i].out --> sink[i].in++;
@@ -117,7 +120,7 @@ network NETWORK {
 All'interno del file è possibile definire dei for con struttura `for INDICE=START...END-1`. 
 
 ### FILE.ini.mako
-Si definisce il FILE.ini.mako che viene utilizzato per creare tutte le configurazioni da testare. Si definisce la configurazione `General` in cui è essenziale il parametro `repeat = ...` che specifica il numero di volte per cui la configurazione verrà ripetuta (vale per tutte le configurazioni all'inteno del file). 
+Si definisce il FILE.ini.mako che viene utilizzato per creare tutte le configurazioni da testare. Si definisce la configurazione `General` in cui è essenziale il parametro `repeat = ..` che specifica il numero di volte per cui la configurazione verrà ripetuta (vale per tutte le configurazioni all'inteno del file). 
 ```mako
 [General]
 ned-path = .;../queueinglib
@@ -338,6 +341,62 @@ python3 ../../omnet_analyzer/analyze_data.py -c config${FILE_NAME}.json -d datab
 ###
 ###
 ###
+# 4 - Tables and Histogram
+Questa sezione si occupa della realizzazione del *table.py* per la creazione delle tabelle e dei grafici.
+
+## 4.1 - Structure
+* table.py --> Usato per printare le tabelle e i grafici 
+* graph.py --> Usato per creare il grafico
+
+### table.py
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+data = np.loadtxt("results/analysis_1.data")
+
+N = 40
+c1, servtime1, utilization1 = data[0][1], data[0][2], data[0][4]
+c2, servtime2, utilization2 = data[1][1], data[1][2], data[1][4]
+
+ctot1 = ((10000 * utilization1) / 3600) * c1 * N
+ctot2 = ((10000 * utilization2) / 3600) * c1 * N
+
+print("Table results ===============================")
+print(f"N = {N}, Server 1, Service time = {servtime1:.3f}s, Costo = {c1}, Utilization = {utilization1:.3f}, Costo totale = {ctot1:.3f}$")
+print(f"N = {N}, Server 2, Service time = {servtime2:.3f}s, Costo = {c2}, Utilization = {utilization2:.3f}, Costo totale = {ctot2:.3f}$")
+```
+Questa funzione ha il compito di calcolare **l'intervallo di confidenza** utilizzando i parametri $\sigma$, confindenza in % (es. 68%) e numero di repliche. 
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import t
+import math
+
+def evaluate_ic(std_dev, confidence_level, n_replicas):
+    df = n_replicas - 1
+    alpha = 1 - (confidence_level / 100)
+    q = 1 - (alpha / 2)
+    t_critical = t.ppf(q, df)
+    ic = t_critical * (std_dev / math.sqrt(n_replicas))
+    return ic
+```
+
+### graph.py
+```python
+```
+
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
+###
 # Components
 Segue una definizione dettagliata dei principali componenti che possono essere utilizzati all'interno di Omnet. 
 
@@ -487,6 +546,11 @@ Sono quindi riassunte alcune tra le formule più utili:
 $$
 T_{resp} = \frac{1}{\mu - \frac{\lambda}{N}}
 $$
+Formula inversa per trovare il numero di server/code necessari per soddisfare i requistiti nello SLA.
+$$
+N = \frac{T_{resp} - \lambda}{T_{resp} \mu - 1}
+$$
+
 Formula di **Pollaczek-Khinchin**
 $$
 N \geq \left\lceil \frac{\Lambda}{\mu} \cdot \frac{\text{CoV}^2 - 2K - 1}{2K - 2} \right\rceil
