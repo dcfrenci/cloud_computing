@@ -615,8 +615,16 @@ if __name__ == '__main__':
 # 5 - PubSub
 
 ## 5.1 - Structure
+* publisher.py --> Usato per definire il publisher che andrà a creare i messaggi sul topic
+* subscriber.py --> Usato per una configurazione **pull**
+* pubsub.py --> Usato per una configurazione **push**
+
+Si distinguono due possibili configurazioni:
+* **Pull**: è colui che è iscritto al topic a chiedere se sono presenti dei nuovi messaggi. 
+* **Push**: è il "topic" che invierà una notifica a coloro che sono iscritti al topic quando è presente un nuovo messaggio.
 
 ### publisher.py
+Da creare sia in caso di pull che di push.
 ```python
 import os
 from google.cloud import firestore
@@ -643,7 +651,44 @@ if __name__=='__main__':
         time.sleep(update_interval)
 ```
 
+### subscriber.py
+```python
+import os
+from google.cloud import pubsub_v1
+from google.cloud import firestore
+
+subscription_name=os.environ['SUBSCRIPTION_NAME'] if 'SUBSCRIPTION_NAME' in os.environ.keys() else 'SUBSCRIPTION_NAME'
+project_id = os.environ['PROJECT_ID'] if 'PROJECT_ID' in os.environ.keys()  else 'PROJECT_ID'
+
+subscriber = pubsub_v1.SubscriberClient()
+subscription_path = subscriber.subscription_path(project_id, subscription_name)
+
+db = firestore.Client("NOME_DATABASE")
+
+def save_temperature(data):
+    dt = datetime.datetime.fromtimestamp(data['timestamp'])
+    docname = dt.strftime('%Y%m%d')
+    print(docname, data['temperature'])
+    db.collection('temperature').document(docname).set({str(data['timestamp']): data['temperature']}, merge=True)
+
+
+def callback(message):
+    message.ack()
+    try:
+        save_temperature(json.loads(message.data.decode('utf-8')))
+    except:
+        pass
+
+if __name__=='__main__':    
+    pull = subscriber.subscribe(subscription_path, callback=callback)
+    try:
+        pull.result()
+    except:
+        pull.cancel()
+```
+
 ### pubsub.py 
+Definiamo un Web Hook 
 ```python
 import os
 from google.cloud import firestore
@@ -679,25 +724,28 @@ env_variables:
 ```
 
 ## 5.2 - Deploy
-
+Definiamo il nome del topic da creare:
 ```bash
 export TOPIC=TOPIC_NAME
 echo TOPIC = ${TOPIC}
 ```
-
+Verifichiamo che tutte le variabili globali siano corrette.
 ```bash
 export TOKEN=123token
 echo TOKEN = ${TOKEN}
 export SUBSCRIPTION_NAME=SUBSCRIPTION_NAME
 echo SUBSCRIPTION_NAME = ${SUBSCRIPTION_NAME}
 ```
+Creiamo il topic con il nome definito nella variabile globale `TOPIC`.
+```bash
+gcloud pubsub topics create ${TOPIC}
+```
 
 ```bash
 gcloud pubsub subscriptions create ${SUBSCRIPTION_NAME} --topic ${TOPIC} --push-endpoint "https://${PROJECT_ID}.appspot.com/pubsub/push?token=${TOKEN}" --ack-deadline 10
 ```
-
-
 ## 5.3 - Testing
+
 ###
 ###
 ###
@@ -789,6 +837,17 @@ Nel caso di **Event-driven Function** sappiamo che data è un dizionario a cui p
 db = firestore.Client(database="NOME_DATABASE")
 
 def EVENT_FUNCTION(data, context):
+
+    if not context.event_type.endwith(".create"):
+        # Create event
+        return 
+    if not context.event_type.endwith(".update"):
+        # Update event
+        return 
+    if not context.event_type.endwith(".delete"):
+        # Delete event
+        return 
+
     document = data['value']
     value = context.params['KEY']
     document_name = context.resource.split('/')[-1]
