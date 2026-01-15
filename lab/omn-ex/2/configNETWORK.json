@@ -1,0 +1,46 @@
+{
+    "scenario_schema": {
+        "N": {"pattern": "**.N", "type": "int"},
+        "mu": {"pattern": "**.mu", "type": "real"}, 
+        "c": {"pattern": "**.c", "type": "real"}
+    },
+    "metrics": {
+        "ResponseTime": {"module": "**.sink", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "Utilization": {"module": "**.srv[*]", "scalar_name": "busy:timeavg" ,"aggr": ["none"]}
+    },
+    "analyses": {
+        "Analysis_1": {
+            "outfile": "results/analysis_1.data",
+            "scenarios": {
+                "fixed": {"N": "40"},
+                "range": ["mu", "c"]
+            },
+            "metrics": [
+                {"metric": "ResponseTime", "aggr": "none"},
+                {"metric": "Utilization", "aggr": "none"}
+            ]
+        },
+        "Analysis_2": {
+            "outfile": "results/analysis_2.data",
+            "scenarios": {
+                "fixed": {},
+                "range": ["mu", "c", "N"]
+            },
+            "metrics": [
+                {"metric": "ResponseTime", "aggr": "none"},
+                {"metric": "Utilization", "aggr": "none"}
+            ]
+        },
+        "Analysis_3": {
+            "outfile": "results/analysis_3.data",
+            "scenarios": {
+                "fixed": {},
+                "range": ["mu", "c", "N"]
+            },
+            "metrics": [
+                {"metric": "ResponseTime", "aggr": "none"},
+                {"metric": "Utilization", "aggr": "none"}
+            ]
+        }
+    }
+}

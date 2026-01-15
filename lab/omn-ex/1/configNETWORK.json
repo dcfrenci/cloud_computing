@@ -1,0 +1,22 @@
+{
+    "scenario_schema": {
+        "fl": {"pattern": "**.fl", "type": "real"}
+    },
+    "metrics": {
+        "ResponseTimeLocal": {"module": "**.sink", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "ResponseTimeCloud": {"module": "**.csink", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]}
+    },
+    "analyses": {
+        "NETWORK_P1": {
+            "outfile": "results/NETWORK_P1.data",
+            "scenarios": {
+                "fixed": {},
+                "range": ["fl"]
+            },
+            "metrics": [
+                {"metric": "ResponseTimeLocal", "aggr": "none"},
+                {"metric": "ResponseTimeCloud", "aggr": "none"}
+            ]
+        }
+    }
+}
