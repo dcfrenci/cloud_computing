@@ -1,0 +1,97 @@
+{
+    "scenario_schema": {
+        "prob": {"pattern": "**.prob", "type": "real"}
+    },
+    "metrics": {
+        "ResponseTime1": {"module": "**.sink1", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "ResponseTime2": {"module": "**.sink2", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "ResponseTimeGlobal": {"module": "**.sinkgl", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]}
+    },
+    "analyses": {
+        "Analysis_1": {
+            "outfile": "results/analysis_1.data",
+            "scenarios": {
+                "fixed": {},
+                "range": ["prob"]
+            },
+            "metrics": [
+                {"metric": "ResponseTime1", "aggr": "none"},
+                {"metric": "ResponseTime2", "aggr": "none"},
+                {"metric": "ResponseTimeGlobal", "aggr": "none"}
+            ]
+        }
+    }
+}
+
+{
+    "scenario_schema": {
+        "prob": {"pattern": "**.prob", "type": "real"}
+    },
+    "metrics": {
+        "ResponseTime1": {"module": "**.sink1", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "ResponseTime2": {"module": "**.sink2", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "ResponseTimeGlobal": {"module": "**.sinkgl", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]}
+    },
+    "analyses": {
+        "Analysis_1": {
+            "outfile": "results/analysis_3.data",
+            "scenarios": {
+                "fixed": {},
+                "range": ["prob"]
+            },
+            "metrics": [
+                {"metric": "ResponseTime1", "aggr": "none"},
+                {"metric": "ResponseTime2", "aggr": "none"},
+                {"metric": "ResponseTimeGlobal", "aggr": "none"}
+            ]
+        }
+    }
+}
+{
+    "scenario_schema": {
+        "prob": {"pattern": "**.prob", "type": "real"}
+    },
+    "metrics": {
+        "ResponseTime1": {"module": "**.sink1", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "ResponseTime2": {"module": "**.sink2", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "ResponseTimeGlobal": {"module": "**.sinkgl", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]}
+    },
+    "analyses": {
+        "Analysis_1": {
+            "outfile": "results/analysis_2.data",
+            "scenarios": {
+                "fixed": {},
+                "range": ["prob"]
+            },
+            "metrics": [
+                {"metric": "ResponseTime1", "aggr": "none"},
+                {"metric": "ResponseTime2", "aggr": "none"},
+                {"metric": "ResponseTimeGlobal", "aggr": "none"}
+            ]
+        }
+    }
+}
+{
+    "scenario_schema": {
+        "prob": {"pattern": "**.prob", "type": "real"}
+    },
+    "metrics": {
+        "ResponseTime1": {"module": "**.sink1", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "ResponseTime2": {"module": "**.sink2", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "ResponseTimeGlobal": {"module": "**.sinkgl", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]}
+    },
+    "analyses": {
+        "Analysis_1": {
+            "outfile": "results/analysis_3.data",
+            "scenarios": {
+                "fixed": {},
+                "range": ["prob"]
+            },
+            "metrics": [
+                {"metric": "ResponseTime1", "aggr": "none"},
+                {"metric": "ResponseTime2", "aggr": "none"},
+                {"metric": "ResponseTimeGlobal", "aggr": "none"}
+            ]
+        }
+    }
+}

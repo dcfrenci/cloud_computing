@@ -347,24 +347,45 @@ Questa sezione si occupa della realizzazione del *table.py* per la creazione del
 ## 4.1 - Structure
 * table.py --> Usato per printare le tabelle e i grafici 
 * graph.py --> Usato per creare il grafico
+* plots.py --> Usato per plottare i dati in un grafico
 
 ### table.py
+Si utilizza numpy per caricare i dati dal file *.data* e stamparli dopo aver eseguito le operazioni necessarie. 
 ```python
-import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import t
+import math
 
+def evaluate_ic(std_dev, confidence_level, n_replicas):
+    df = n_replicas - 1
+    alpha = 1 - (confidence_level / 100)
+    q = 1 - (alpha / 2)
+    t_critical = t.ppf(q, df)
+    ic = t_critical * (std_dev / math.sqrt(n_replicas))
+    return ic
+
+
+print(f"Parte 1 ================================")
 data = np.loadtxt("results/analysis_1.data")
 
-N = 40
-c1, servtime1, utilization1 = data[0][1], data[0][2], data[0][4]
-c2, servtime2, utilization2 = data[1][1], data[1][2], data[1][4]
+tr1, tr2, trgl = data[1] * 1000, data[3] * 1000, data[5] * 1000
+st1, st2, stgl = data[2], data[4], data[6]
+c1, c2, cgl = evaluate_ic(st1, 67, 10) * 1000, evaluate_ic(st2, 67, 10) * 1000, evaluate_ic(stgl, 67, 10) * 1000
 
-ctot1 = ((10000 * utilization1) / 3600) * c1 * N
-ctot2 = ((10000 * utilization2) / 3600) * c1 * N
+print(f"srv1    --> Tr = {tr1:.1f} +- {c1:.1f} ms")
+print(f"srv2    --> Tr = {tr2:.1f} +- {c2:.1} ms")
+print(f"Global  --> Tr = {trgl:.1f} +- {cgl:.1f} ms")
 
-print("Table results ===============================")
-print(f"N = {N}, Server 1, Service time = {servtime1:.3f}s, Costo = {c1}, Utilization = {utilization1:.3f}, Costo totale = {ctot1:.3f}$")
-print(f"N = {N}, Server 2, Service time = {servtime2:.3f}s, Costo = {c2}, Utilization = {utilization2:.3f}, Costo totale = {ctot2:.3f}$")
+
+print(f"Parte 2 ================================")
+data = np.loadtxt("results/analysis_2.data")
+
+p, tr1, tr2, trgl = data[0] / 10, data[1] * 1000, data[3] * 1000, data[5] * 1000
+
+print(f"p --> {p}")
+print(f"Tr1 --> {tr1:.1f}")
+print(f"Tr2 --> {tr2:.1f}")
+print(f"TrG --> {trgl:.1f}")
 ```
 Questa funzione ha il compito di calcolare **l'intervallo di confidenza** utilizzando i parametri $\sigma$, confindenza in % (es. 68%) e numero di repliche. 
 ```python
@@ -384,8 +405,102 @@ def evaluate_ic(std_dev, confidence_level, n_replicas):
 
 ### graph.py
 ```python
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import t
+import math
+from plots import * 
+
+print(f"Parte 3 ================================")
+data = np.loadtxt("results/analysis_3.data")
+
+for row in data:
+    p, tr1, tr2, trgl = row[0] / 10, row[1] * 1000, row[3] * 1000, row[5] * 1000
+    st1, st2, stgl = row[2], row[4], row[6]
+    c1, c2, cgl = evaluate_ic(st1, 67, 10) * 1000, evaluate_ic(st2, 67, 10) * 1000, evaluate_ic(stgl, 67, 10) * 1000
+
+    print(f"p = {p:.2f},   |   Tr1 = {tr1:.1f} +- {c1:.1f} ms,   |   Tr2 = {tr2:.1f} +- {c2:.1f} ms,   |   TrG = {trgl:.1f} +- {cgl:.1f} ms")
+
+
+
+
+fig, ax = plt.subplots()
+ax.set(xlabel='$p$', ylabel='Time [s]')
+
+p = [row[0] for row in data]
+t1 = [row[1] for row in data]
+t2 = [row[3] for row in data]
+tgl = [row[5] for row in data]
+    
+
+
+plot_line(ax, 'o--', None, 'Response Time 1', p, t1)
+plot_line(ax, 'o--', None, 'Response Time 2', p, t2)
+plot_line(ax, 'o--', None, 'Response Time Global', p, tgl)
+
+plt.legend()
+plt.savefig('sample.png')
+
+plt.show()
 ```
 
+### plots.py
+Questo file è stato fornito dal professore e viene utilizzato come libreria per creare i grafici.
+```python
+#!/usr/bin/python3
+import sys
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import Patch
+import matplotlib as mpl
+import matplotlib.colors as mc
+
+def set_fonts():
+    """ 
+    Set LaTeX-friendly fonts. Call this function at the beginning of your code
+    """
+    mpl.rcParams['font.family'] = 'Nimbus Sans'
+    mpl.rcParams["figure.autolayout"] = True
+    mpl.rc('text', usetex=True)
+    mpl.rcParams.update({'font.size': 10})
+
+def plot_line(ax, format, fname, label, xcol, ycol, errcol=None):
+    """
+    Plot a line from data
+    
+    Parameters
+    ----------
+    ax : 
+        canvas for plotting. Refer to matplotlib.pyplot. Can ge the object returned by matplotlib.pyplot.subplots()
+    format: str
+        format string. Refer to matplotlib.pyplot
+    fname: str or None
+        name of a tab-separated column file. Column names are on the first row
+    label: str
+        label of the curve in the plot
+    xcol:
+        the x data for the plot 
+        can be the name of a column in a dataframe if fname is a file with data
+        can be a callable that is invoked on the dataframe
+        can be a set list/array with data
+    ycol:
+        like xcol, but this is the y data of the plot
+    errcol:
+        like xcol but ti can aslo be none. If set it contains the error values to represent a confidence interval
+    """
+    if fname is not None:
+        data = pd.read_csv(fname, sep='\t')
+    use_data=fname is not None and not callable(xcol) and not callable(ycol) and not callable(errcol)
+    xcol = xcol(data) if callable(xcol) else xcol
+    ycol = ycol(data) if callable(ycol) else ycol
+    errcol=errcol(data) if callable(errcol) else errcol
+    data=data if use_data else None
+    if errcol is not None:
+        ax.errorbar(xcol, ycol, yerr=errcol, data=data, fmt=format, label=label, capsize=5)
+    else:
+        ax.plot(xcol, ycol, format, data=data, label=label)
+```
 ###
 ###
 ###
